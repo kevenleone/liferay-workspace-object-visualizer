@@ -1,4 +1,4 @@
-shadcn-custom-element:
+object-visualizer-custom-element:
     urls:
         -   http://localhost:5173/@vite/client
         -   http://localhost:5173/@vite/refresh.ts

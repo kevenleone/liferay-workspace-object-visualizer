@@ -19,7 +19,7 @@ export default defineConfig({
     },
     experimental: {
         renderBuiltUrl(filename: string) {
-            return `/o/shadcn-custom-element/${filename}`;
+            return `/o/object-visualizer-custom-element/${filename}`;
         },
     },
     resolve: {
