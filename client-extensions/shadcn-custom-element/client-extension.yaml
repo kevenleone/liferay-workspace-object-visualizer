@@ -1,0 +1,15 @@
+assemble:
+    -   from: build/vite
+        into: static
+shadcn-custom-element:
+    friendlyURLMapping: shadcn-custom-element
+    htmlElementName: shadcn-custom-element
+    instanceable: false
+    name: ShadCN Custom Element
+    panelAppOrder: 700
+    panelCategoryKey: applications_menu.applications.custom.apps
+    portletCategoryName: category.client-extensions
+    type: customElement
+    urls:
+        -   "main.js"
+    useESM: true
