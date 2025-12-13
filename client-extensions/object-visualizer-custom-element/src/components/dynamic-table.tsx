@@ -46,6 +46,7 @@ import {
     useNavigate,
     useSearch,
     useParams,
+    useLocation,
 } from '@tanstack/react-router';
 
 type Props = {
@@ -69,9 +70,17 @@ export default function JsonToCsvConverter({
     const [rows, setRows] = useState<string[][]>([]);
     const [selectedJsonData, setSelectedJsonData] = useState<any>(null);
     const { invalidate } = useRouter();
-    const navigate = useNavigate({ from: '/p/$externalReferenceCode/' });
-    const params = useParams({ from: '/p/$externalReferenceCode/' });
-    const search = useSearch({ from: '/p/$externalReferenceCode/' });
+    const location = useLocation();
+
+    // Detect which route we're on
+    const isQueryRoute = location.pathname.includes('/query');
+    const routePath = isQueryRoute
+        ? '/p/$externalReferenceCode/query'
+        : '/p/$externalReferenceCode/';
+
+    const navigate = useNavigate({ from: routePath });
+    const params = useParams({ from: routePath });
+    const search = useSearch({ from: routePath });
     const [columnVisibility, setColumnVisibility] = useState<
         Record<string, boolean>
     >({});
