@@ -9,12 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as EnvironmentsRouteImport } from './routes/environments'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as PRouteRouteImport } from './routes/p/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PIndexRouteImport } from './routes/p/index'
+import { Route as PExternalReferenceCodeRouteRouteImport } from './routes/p/$externalReferenceCode/route'
+import { Route as PExternalReferenceCodeIndexRouteImport } from './routes/p/$externalReferenceCode/index'
+import { Route as PExternalReferenceCodeSchemaRouteImport } from './routes/p/$externalReferenceCode/schema'
+import { Route as PExternalReferenceCodeQueryRouteImport } from './routes/p/$externalReferenceCode/query'
+import { Route as PExternalReferenceCodeLiveRouteImport } from './routes/p/$externalReferenceCode/live'
 
+const EnvironmentsRoute = EnvironmentsRouteImport.update({
+  id: '/environments',
+  path: '/environments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PRouteRoute = PRouteRouteImport.update({
+  id: '/p',
+  path: '/p',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -22,40 +40,142 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PIndexRoute = PIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PRouteRoute,
+} as any)
+const PExternalReferenceCodeRouteRoute =
+  PExternalReferenceCodeRouteRouteImport.update({
+    id: '/$externalReferenceCode',
+    path: '/$externalReferenceCode',
+    getParentRoute: () => PRouteRoute,
+  } as any)
+const PExternalReferenceCodeIndexRoute =
+  PExternalReferenceCodeIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => PExternalReferenceCodeRouteRoute,
+  } as any)
+const PExternalReferenceCodeSchemaRoute =
+  PExternalReferenceCodeSchemaRouteImport.update({
+    id: '/schema',
+    path: '/schema',
+    getParentRoute: () => PExternalReferenceCodeRouteRoute,
+  } as any)
+const PExternalReferenceCodeQueryRoute =
+  PExternalReferenceCodeQueryRouteImport.update({
+    id: '/query',
+    path: '/query',
+    getParentRoute: () => PExternalReferenceCodeRouteRoute,
+  } as any)
+const PExternalReferenceCodeLiveRoute =
+  PExternalReferenceCodeLiveRouteImport.update({
+    id: '/live',
+    path: '/live',
+    getParentRoute: () => PExternalReferenceCodeRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/p': typeof PRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/environments': typeof EnvironmentsRoute
+  '/p/$externalReferenceCode': typeof PExternalReferenceCodeRouteRouteWithChildren
+  '/p/': typeof PIndexRoute
+  '/p/$externalReferenceCode/live': typeof PExternalReferenceCodeLiveRoute
+  '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
+  '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
+  '/p/$externalReferenceCode/': typeof PExternalReferenceCodeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/environments': typeof EnvironmentsRoute
+  '/p': typeof PIndexRoute
+  '/p/$externalReferenceCode/live': typeof PExternalReferenceCodeLiveRoute
+  '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
+  '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
+  '/p/$externalReferenceCode': typeof PExternalReferenceCodeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/p': typeof PRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/environments': typeof EnvironmentsRoute
+  '/p/$externalReferenceCode': typeof PExternalReferenceCodeRouteRouteWithChildren
+  '/p/': typeof PIndexRoute
+  '/p/$externalReferenceCode/live': typeof PExternalReferenceCodeLiveRoute
+  '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
+  '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
+  '/p/$externalReferenceCode/': typeof PExternalReferenceCodeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths:
+    | '/'
+    | '/p'
+    | '/about'
+    | '/environments'
+    | '/p/$externalReferenceCode'
+    | '/p/'
+    | '/p/$externalReferenceCode/live'
+    | '/p/$externalReferenceCode/query'
+    | '/p/$externalReferenceCode/schema'
+    | '/p/$externalReferenceCode/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to:
+    | '/'
+    | '/about'
+    | '/environments'
+    | '/p'
+    | '/p/$externalReferenceCode/live'
+    | '/p/$externalReferenceCode/query'
+    | '/p/$externalReferenceCode/schema'
+    | '/p/$externalReferenceCode'
+  id:
+    | '__root__'
+    | '/'
+    | '/p'
+    | '/about'
+    | '/environments'
+    | '/p/$externalReferenceCode'
+    | '/p/'
+    | '/p/$externalReferenceCode/live'
+    | '/p/$externalReferenceCode/query'
+    | '/p/$externalReferenceCode/schema'
+    | '/p/$externalReferenceCode/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PRouteRoute: typeof PRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
+  EnvironmentsRoute: typeof EnvironmentsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/environments': {
+      id: '/environments'
+      path: '/environments'
+      fullPath: '/environments'
+      preLoaderRoute: typeof EnvironmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p': {
+      id: '/p'
+      path: '/p'
+      fullPath: '/p'
+      preLoaderRoute: typeof PRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -65,12 +185,90 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/p/': {
+      id: '/p/'
+      path: '/'
+      fullPath: '/p/'
+      preLoaderRoute: typeof PIndexRouteImport
+      parentRoute: typeof PRouteRoute
+    }
+    '/p/$externalReferenceCode': {
+      id: '/p/$externalReferenceCode'
+      path: '/$externalReferenceCode'
+      fullPath: '/p/$externalReferenceCode'
+      preLoaderRoute: typeof PExternalReferenceCodeRouteRouteImport
+      parentRoute: typeof PRouteRoute
+    }
+    '/p/$externalReferenceCode/': {
+      id: '/p/$externalReferenceCode/'
+      path: '/'
+      fullPath: '/p/$externalReferenceCode/'
+      preLoaderRoute: typeof PExternalReferenceCodeIndexRouteImport
+      parentRoute: typeof PExternalReferenceCodeRouteRoute
+    }
+    '/p/$externalReferenceCode/schema': {
+      id: '/p/$externalReferenceCode/schema'
+      path: '/schema'
+      fullPath: '/p/$externalReferenceCode/schema'
+      preLoaderRoute: typeof PExternalReferenceCodeSchemaRouteImport
+      parentRoute: typeof PExternalReferenceCodeRouteRoute
+    }
+    '/p/$externalReferenceCode/query': {
+      id: '/p/$externalReferenceCode/query'
+      path: '/query'
+      fullPath: '/p/$externalReferenceCode/query'
+      preLoaderRoute: typeof PExternalReferenceCodeQueryRouteImport
+      parentRoute: typeof PExternalReferenceCodeRouteRoute
+    }
+    '/p/$externalReferenceCode/live': {
+      id: '/p/$externalReferenceCode/live'
+      path: '/live'
+      fullPath: '/p/$externalReferenceCode/live'
+      preLoaderRoute: typeof PExternalReferenceCodeLiveRouteImport
+      parentRoute: typeof PExternalReferenceCodeRouteRoute
+    }
   }
 }
 
+interface PExternalReferenceCodeRouteRouteChildren {
+  PExternalReferenceCodeLiveRoute: typeof PExternalReferenceCodeLiveRoute
+  PExternalReferenceCodeQueryRoute: typeof PExternalReferenceCodeQueryRoute
+  PExternalReferenceCodeSchemaRoute: typeof PExternalReferenceCodeSchemaRoute
+  PExternalReferenceCodeIndexRoute: typeof PExternalReferenceCodeIndexRoute
+}
+
+const PExternalReferenceCodeRouteRouteChildren: PExternalReferenceCodeRouteRouteChildren =
+  {
+    PExternalReferenceCodeLiveRoute: PExternalReferenceCodeLiveRoute,
+    PExternalReferenceCodeQueryRoute: PExternalReferenceCodeQueryRoute,
+    PExternalReferenceCodeSchemaRoute: PExternalReferenceCodeSchemaRoute,
+    PExternalReferenceCodeIndexRoute: PExternalReferenceCodeIndexRoute,
+  }
+
+const PExternalReferenceCodeRouteRouteWithChildren =
+  PExternalReferenceCodeRouteRoute._addFileChildren(
+    PExternalReferenceCodeRouteRouteChildren,
+  )
+
+interface PRouteRouteChildren {
+  PExternalReferenceCodeRouteRoute: typeof PExternalReferenceCodeRouteRouteWithChildren
+  PIndexRoute: typeof PIndexRoute
+}
+
+const PRouteRouteChildren: PRouteRouteChildren = {
+  PExternalReferenceCodeRouteRoute:
+    PExternalReferenceCodeRouteRouteWithChildren,
+  PIndexRoute: PIndexRoute,
+}
+
+const PRouteRouteWithChildren =
+  PRouteRoute._addFileChildren(PRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PRouteRoute: PRouteRouteWithChildren,
   AboutRoute: AboutRoute,
+  EnvironmentsRoute: EnvironmentsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
