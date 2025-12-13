@@ -252,9 +252,25 @@ export default function JsonToCsvConverter({
         }));
     };
 
+    const resetColumnVisibility = () => {
+        const allVisible: Record<string, boolean> = {};
+        headers.forEach((header) => {
+            allVisible[header] = true;
+        });
+        setColumnVisibility(allVisible);
+    };
+
     const visibleHeaders = headers.filter(
         (header) => columnVisibility[header] !== false
     );
+
+    // Calculate how many columns are hidden
+    const hiddenColumnsCount = headers.filter(
+        (header) => columnVisibility[header] === false
+    ).length;
+
+    // Check if any columns have been hidden (changed from default)
+    const hasHiddenColumns = hiddenColumnsCount > 0;
 
     const downloadCsv = () => {
         if (!csvOutput) return;
@@ -288,18 +304,39 @@ export default function JsonToCsvConverter({
                         {csvOutput && headers.length > 0 && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="relative pr-2"
+                                    >
                                         <Columns className="h-4 w-4 mr-2" />
-                                        Columns
+                                        <span className="mr-1">Columns</span>
+                                        {hasHiddenColumns && (
+                                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                                                {hiddenColumnsCount}
+                                            </span>
+                                        )}
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
                                     align="end"
                                     className="w-56"
                                 >
-                                    <DropdownMenuLabel>
-                                        Toggle Columns
-                                    </DropdownMenuLabel>
+                                    <div className="flex items-center justify-between px-2 py-1.5">
+                                        <DropdownMenuLabel className="px-0">
+                                            Toggle Columns
+                                        </DropdownMenuLabel>
+                                        {hasHiddenColumns && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={resetColumnVisibility}
+                                                className="h-7 px-2 text-xs"
+                                            >
+                                                Reset
+                                            </Button>
+                                        )}
+                                    </div>
                                     <DropdownMenuSeparator />
                                     {headers.map((header) => (
                                         <DropdownMenuCheckboxItem
