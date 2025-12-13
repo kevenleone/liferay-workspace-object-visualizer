@@ -1,6 +1,8 @@
 import JsonToCsvConverter from '@/components/dynamic-table';
 import { QueryInterface } from '@/components/query-interface';
+import { QueryHistory } from '@/components/query-history';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Liferay } from '@/lib/liferay';
 import {
     createFileRoute,
@@ -11,7 +13,7 @@ import {
     ObjectDefinition,
     ObjectField,
 } from 'liferay-headless-rest-client/object-admin-v1.0';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 
 export const Route = createFileRoute('/p/$externalReferenceCode/query')({
     component: RouteComponent,
@@ -100,6 +102,8 @@ function RouteComponent() {
     });
 
     const [queryResults, setQueryResults] = useState<any>(loaderData);
+    const [activeTab, setActiveTab] = useState('results');
+    const resultsRef = useRef<HTMLDivElement | null>(null);
 
     // Update results when loader data changes
     useEffect(() => {
@@ -107,6 +111,60 @@ function RouteComponent() {
             setQueryResults(loaderData);
         }
     }, [loaderData]);
+
+    useEffect(() => {
+        const query = search?.query;
+        if (!query || queryResults === undefined) return;
+        const storageKey = `queryHistory_${externalReferenceCode}`;
+        let history: any[] = [];
+        try {
+            const saved = localStorage.getItem(storageKey);
+            if (saved) {
+                history = JSON.parse(saved);
+            }
+        } catch {
+            history = [];
+        }
+        const endpoint = objectDefinition?.restContextPath || '';
+        const status = queryResults?.error ? 'error' : 'success';
+        const rowCount = Array.isArray(queryResults?.items)
+            ? queryResults.items.length
+            : 0;
+        const errorMessage = queryResults?.error || undefined;
+        const idx = history.findIndex(
+            (h: any) =>
+                h?.query === query &&
+                (h?.rowCount === undefined ||
+                    h?.status === undefined ||
+                    (status === 'error' && h?.error === undefined))
+        );
+        if (idx > -1) {
+            history[idx] = {
+                ...history[idx],
+                status,
+                rowCount,
+                error: errorMessage,
+                endpoint,
+            };
+        } else {
+            history.unshift({
+                id: Date.now().toString(),
+                query,
+                executedAt: new Date().toLocaleString(),
+                status,
+                rowCount,
+                error: errorMessage,
+                endpoint,
+            });
+            history = history.slice(0, 50);
+        }
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(history));
+        } catch {
+            console.error('Failed to save query history');
+        }
+        window.dispatchEvent(new Event('queryHistoryUpdated'));
+    }, [queryResults, search?.query, externalReferenceCode, objectDefinition]);
 
     const rows = useMemo(() => {
         if (
@@ -208,61 +266,91 @@ function RouteComponent() {
             <QueryInterface
                 objectDefinition={objectDefinition}
                 externalReferenceCode={externalReferenceCode}
+                showHistory={false}
+                onQueryExecute={() => {
+                    setActiveTab('results');
+                    setTimeout(() => {
+                        resultsRef.current?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                        });
+                    }, 0);
+                }}
             />
 
-            {/* Debug info - remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-                <div className="text-xs text-muted-foreground p-2 bg-muted rounded">
-                    Debug: queryResults=
-                    {JSON.stringify({
-                        hasResults: !!queryResults,
-                        hasError: !!queryResults?.error,
-                        hasItems: !!queryResults?.items,
-                        itemsLength: queryResults?.items?.length,
-                        rowsLength: rows.length,
-                    })}
-                </div>
-            )}
+            <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="space-y-4"
+            >
+                <TabsList>
+                    <TabsTrigger value="results">Results</TabsTrigger>
+                    <TabsTrigger value="history">History</TabsTrigger>
+                </TabsList>
 
-            {queryResults &&
-                !queryResults.error &&
-                queryResults.items &&
-                Array.isArray(queryResults.items) &&
-                queryResults.items.length > 0 && (
-                    <JsonToCsvConverter
-                        entriesPage={queryResults}
-                        objectDefinition={objectDefinition}
-                        data={rows}
+                <TabsContent value="results" className="space-y-4">
+                    <div ref={resultsRef} />
+                    {process.env.NODE_ENV === 'development' && (
+                        <div className="text-xs text-muted-foreground p-2 bg-muted rounded">
+                            Debug: queryResults=
+                            {JSON.stringify({
+                                hasResults: !!queryResults,
+                                hasError: !!queryResults?.error,
+                                hasItems: !!queryResults?.items,
+                                itemsLength: queryResults?.items?.length,
+                                rowsLength: rows.length,
+                            })}
+                        </div>
+                    )}
+
+                    {queryResults &&
+                        !queryResults.error &&
+                        queryResults.items &&
+                        Array.isArray(queryResults.items) &&
+                        queryResults.items.length > 0 && (
+                            <JsonToCsvConverter
+                                entriesPage={queryResults}
+                                objectDefinition={objectDefinition}
+                                data={rows}
+                            />
+                        )}
+
+                    {queryResults &&
+                        !queryResults.error &&
+                        (!queryResults.items ||
+                            (Array.isArray(queryResults.items) &&
+                                queryResults.items.length === 0)) && (
+                            <div className="rounded-lg border border-border bg-muted/50 p-4">
+                                <p className="text-sm text-muted-foreground">
+                                    Query executed successfully but returned no
+                                    results.
+                                </p>
+                            </div>
+                        )}
+
+                    {queryResults?.error && (
+                        <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
+                            <p className="text-sm font-medium text-destructive">
+                                Query Error: {queryResults.error}
+                            </p>
+                        </div>
+                    )}
+
+                    {!queryResults && search?.query && (
+                        <div className="rounded-lg border border-border bg-muted/50 p-4">
+                            <p className="text-sm text-muted-foreground">
+                                Loading query results...
+                            </p>
+                        </div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="history" className="space-y-4">
+                    <QueryHistory
+                        externalReferenceCode={externalReferenceCode}
                     />
-                )}
-
-            {queryResults &&
-                !queryResults.error &&
-                (!queryResults.items ||
-                    (Array.isArray(queryResults.items) &&
-                        queryResults.items.length === 0)) && (
-                    <div className="rounded-lg border border-border bg-muted/50 p-4">
-                        <p className="text-sm text-muted-foreground">
-                            Query executed successfully but returned no results.
-                        </p>
-                    </div>
-                )}
-
-            {queryResults?.error && (
-                <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
-                    <p className="text-sm font-medium text-destructive">
-                        Query Error: {queryResults.error}
-                    </p>
-                </div>
-            )}
-
-            {!queryResults && search?.query && (
-                <div className="rounded-lg border border-border bg-muted/50 p-4">
-                    <p className="text-sm text-muted-foreground">
-                        Loading query results...
-                    </p>
-                </div>
-            )}
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -28,12 +34,12 @@ import {
 } from 'lucide-react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
-import { Liferay } from '@/lib/liferay';
 
 interface QueryInterfaceProps {
     objectDefinition: ObjectDefinition;
     externalReferenceCode: string;
     onQueryExecute?: (query: string) => void;
+    showHistory?: boolean;
 }
 
 interface QueryHistoryItem {
@@ -45,11 +51,14 @@ interface QueryHistoryItem {
     rowCount?: number;
     error?: string;
     endpoint: string;
+    name?: string;
 }
 
 export function QueryInterface({
     objectDefinition,
     externalReferenceCode,
+    onQueryExecute,
+    showHistory = true,
 }: QueryInterfaceProps) {
     const navigate = useNavigate({ from: '/p/$externalReferenceCode/query' });
     const search = useSearch({ from: '/p/$externalReferenceCode/query' });
@@ -87,6 +96,24 @@ export function QueryInterface({
         }
     }, [queryHistory, storageKey]);
 
+    useEffect(() => {
+        const handler = () => {
+            const savedHistory = localStorage.getItem(storageKey);
+            if (savedHistory) {
+                try {
+                    const parsed = JSON.parse(savedHistory);
+                    setQueryHistory(parsed);
+                } catch {
+                    setQueryHistory([]);
+                }
+            }
+        };
+        window.addEventListener('queryHistoryUpdated', handler);
+        return () => {
+            window.removeEventListener('queryHistoryUpdated', handler);
+        };
+    }, [storageKey]);
+
     const executeQuery = async () => {
         const startTime = performance.now();
 
@@ -101,6 +128,8 @@ export function QueryInterface({
             },
             replace: false,
         });
+
+        onQueryExecute?.(currentQuery);
 
         // Save to history after execution
         const endTime = performance.now();
@@ -129,6 +158,7 @@ export function QueryInterface({
             executedAt: new Date().toLocaleString(),
             status: 'success',
             endpoint: restContextPath || '',
+            name: queryName.trim(),
         };
 
         setQueryHistory((prev) => [historyItem, ...prev.slice(0, 49)]);
@@ -169,6 +199,35 @@ export function QueryInterface({
                             REST API Query Builder
                         </CardTitle>
                         <div className="flex items-center gap-2">
+                            <Select
+                                onValueChange={(id) => {
+                                    const item = queryHistory.find(
+                                        (h) => h.id === id
+                                    );
+                                    if (item) {
+                                        loadQuery(item.query);
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="w-64">
+                                    <SelectValue placeholder="Load saved query" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {queryHistory
+                                        .filter((h) => h.name)
+                                        .map((h) => (
+                                            <SelectItem key={h.id} value={h.id}>
+                                                {h.name}
+                                            </SelectItem>
+                                        ))}
+                                    {queryHistory.filter((h) => h.name)
+                                        .length === 0 && (
+                                        <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                                            No saved queries
+                                        </div>
+                                    )}
+                                </SelectContent>
+                            </Select>
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -240,118 +299,124 @@ Leave empty to fetch all records with default pagination.`}
             </Card>
 
             {/* Query History */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <History className="h-5 w-5" />
-                        Query History
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ScrollArea className="h-96">
-                        {queryHistory.length === 0 ? (
-                            <div className="text-center py-12 text-muted-foreground">
-                                No query history yet. Execute a query to save it
-                                here.
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {queryHistory.map((historyItem) => (
-                                    <div
-                                        key={historyItem.id}
-                                        className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
-                                    >
-                                        <div className="flex items-start justify-between mb-2">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                {historyItem.status ===
-                                                'success' ? (
-                                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                                ) : (
-                                                    <XCircle className="h-4 w-4 text-red-500" />
-                                                )}
-                                                <span className="text-sm text-muted-foreground">
-                                                    {historyItem.executedAt}
-                                                </span>
-                                                {historyItem.duration && (
-                                                    <Badge
-                                                        variant="outline"
-                                                        className="text-xs"
-                                                    >
-                                                        <Clock className="h-3 w-3 mr-1" />
-                                                        {historyItem.duration}
-                                                    </Badge>
-                                                )}
-                                                {historyItem.status ===
-                                                    'success' &&
-                                                    historyItem.rowCount && (
+            {showHistory && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <History className="h-5 w-5" />
+                            Query History
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ScrollArea className="h-96">
+                            {queryHistory.length === 0 ? (
+                                <div className="text-center py-12 text-muted-foreground">
+                                    No query history yet. Execute a query to
+                                    save it here.
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {queryHistory.map((historyItem) => (
+                                        <div
+                                            key={historyItem.id}
+                                            className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                                        >
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    {historyItem.status ===
+                                                    'success' ? (
+                                                        <CheckCircle className="h-4 w-4 text-green-500" />
+                                                    ) : (
+                                                        <XCircle className="h-4 w-4 text-red-500" />
+                                                    )}
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {historyItem.executedAt}
+                                                    </span>
+                                                    {historyItem.duration && (
                                                         <Badge
-                                                            variant="secondary"
+                                                            variant="outline"
                                                             className="text-xs"
                                                         >
+                                                            <Clock className="h-3 w-3 mr-1" />
                                                             {
-                                                                historyItem.rowCount
-                                                            }{' '}
-                                                            rows
+                                                                historyItem.duration
+                                                            }
                                                         </Badge>
                                                     )}
+                                                    {historyItem.status ===
+                                                        'success' &&
+                                                        historyItem.rowCount && (
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="text-xs"
+                                                            >
+                                                                {
+                                                                    historyItem.rowCount
+                                                                }{' '}
+                                                                rows
+                                                            </Badge>
+                                                        )}
+                                                </div>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger
+                                                        asChild
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0"
+                                                        >
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem
+                                                            onClick={() =>
+                                                                loadQuery(
+                                                                    historyItem.query
+                                                                )
+                                                            }
+                                                        >
+                                                            <Copy className="h-4 w-4 mr-2" />
+                                                            Load Query
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            className="text-destructive"
+                                                            onClick={() =>
+                                                                deleteQuery(
+                                                                    historyItem.id
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="h-4 w-4 mr-2" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </div>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 w-8 p-0"
-                                                    >
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            loadQuery(
-                                                                historyItem.query
-                                                            )
-                                                        }
-                                                    >
-                                                        <Copy className="h-4 w-4 mr-2" />
-                                                        Load Query
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem
-                                                        className="text-destructive"
-                                                        onClick={() =>
-                                                            deleteQuery(
-                                                                historyItem.id
-                                                            )
-                                                        }
-                                                    >
-                                                        <Trash2 className="h-4 w-4 mr-2" />
-                                                        Delete
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <div className="space-y-2">
+                                                <div className="text-xs text-muted-foreground">
+                                                    GET {historyItem.endpoint}
+                                                </div>
+                                                <code className="text-sm bg-muted p-2 rounded block overflow-x-auto">
+                                                    {historyItem.query ||
+                                                        '(no parameters)'}
+                                                </code>
+                                            </div>
+                                            {historyItem.error && (
+                                                <div className="mt-2 text-sm text-destructive">
+                                                    {historyItem.error}
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="space-y-2">
-                                            <div className="text-xs text-muted-foreground">
-                                                GET {historyItem.endpoint}
-                                            </div>
-                                            <code className="text-sm bg-muted p-2 rounded block overflow-x-auto">
-                                                {historyItem.query ||
-                                                    '(no parameters)'}
-                                            </code>
-                                        </div>
-                                        {historyItem.error && (
-                                            <div className="mt-2 text-sm text-destructive">
-                                                {historyItem.error}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </ScrollArea>
-                </CardContent>
-            </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }
