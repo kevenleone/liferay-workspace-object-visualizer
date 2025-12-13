@@ -5,6 +5,7 @@ import {
     MoreHorizontal,
     Trash2,
     FileJson,
+    Columns,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,8 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
+    DropdownMenuLabel,
+    DropdownMenuCheckboxItem,
 } from './ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import PaginationControls from './ui/pagination';
@@ -38,7 +41,12 @@ import { JsonViewer } from './ui/json-viewer';
 import { getLocalizedField } from '@/utils';
 import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
 import { liferayClient } from '@/lib/headless-client';
-import { useRouter, useNavigate, useSearch } from '@tanstack/react-router';
+import {
+    useRouter,
+    useNavigate,
+    useSearch,
+    useParams,
+} from '@tanstack/react-router';
 
 type Props = {
     data: any[];
@@ -55,17 +63,23 @@ export default function JsonToCsvConverter({
     entriesPage,
     objectDefinition,
 }: Props) {
-    const { invalidate } = useRouter();
-    const navigate = useNavigate({ from: '/p/$externalReferenceCode/' });
-    const search = useSearch({ from: '/p/$externalReferenceCode/' });
     const [csvOutput, setCsvOutput] = useState('');
     const [headers, setHeaders] = useState<string[]>([]);
+    const [isJsonModalOpen, setIsJsonModalOpen] = useState(false);
     const [rows, setRows] = useState<string[][]>([]);
     const [selectedJsonData, setSelectedJsonData] = useState<any>(null);
-    const [isJsonModalOpen, setIsJsonModalOpen] = useState(false);
+    const { invalidate } = useRouter();
+    const navigate = useNavigate({ from: '/p/$externalReferenceCode/' });
+    const params = useParams({ from: '/p/$externalReferenceCode/' });
+    const search = useSearch({ from: '/p/$externalReferenceCode/' });
+    const [columnVisibility, setColumnVisibility] = useState<
+        Record<string, boolean>
+    >({});
 
     const currentPage = search.page ?? entriesPage.page;
     const pageSize = search.pageSize ?? entriesPage.pageSize;
+
+    const externalReferenceCode = params.externalReferenceCode;
 
     const totalPages = Math.max(
         1,
@@ -113,76 +127,134 @@ export default function JsonToCsvConverter({
         });
     }
 
-    const convertJsonToCsv = useCallback((data: any) => {
-        try {
-            // Parse JSON input
-            const jsonData =
-                typeof data === 'object' ? data : JSON.parse(data.trim());
+    const convertJsonToCsv = useCallback(
+        (data: any) => {
+            try {
+                // Parse JSON input
+                const jsonData =
+                    typeof data === 'object' ? data : JSON.parse(data.trim());
 
-            // Handle different JSON structures
-            let dataArray: Record<string, any>[] = [];
+                // Handle different JSON structures
+                let dataArray: Record<string, any>[] = [];
 
-            if (Array.isArray(jsonData)) {
-                dataArray = jsonData;
-            } else if (typeof jsonData === 'object' && jsonData !== null) {
-                // If it's a single object, wrap it in an array
-                dataArray = [jsonData];
-            } else {
-                throw new Error(
-                    'Invalid JSON structure. Please provide an array of objects or a single object.'
-                );
-            }
+                if (Array.isArray(jsonData)) {
+                    dataArray = jsonData;
+                } else if (typeof jsonData === 'object' && jsonData !== null) {
+                    // If it's a single object, wrap it in an array
+                    dataArray = [jsonData];
+                } else {
+                    throw new Error(
+                        'Invalid JSON structure. Please provide an array of objects or a single object.'
+                    );
+                }
 
-            if (dataArray.length === 0) {
-                throw new Error('No data found in the JSON input.');
-            }
+                if (dataArray.length === 0) {
+                    throw new Error('No data found in the JSON input.');
+                }
 
-            // Extract headers (all unique keys from all objects)
-            const allHeaders = new Set<string>();
-            dataArray.forEach((item) => {
-                Object.keys(item).forEach((key) => allHeaders.add(key));
-            });
-
-            const headerArray = [
-                'ID',
-                ...Array.from(allHeaders).filter((value) => value !== 'ID'),
-            ];
-
-            setHeaders(headerArray);
-
-            // Create CSV content
-            const csvRows = dataArray.map((item) => {
-                return headerArray.map((header) => {
-                    const value = item[header];
-                    // Handle different value types and escape commas and quotes
-                    if (value === null || value === undefined) return '';
-                    if (typeof value === 'object') return value;
-                    return value;
+                // Extract headers (all unique keys from all objects)
+                const allHeaders = new Set<string>();
+                dataArray.forEach((item) => {
+                    Object.keys(item).forEach((key) => allHeaders.add(key));
                 });
-            });
 
-            setRows(csvRows);
+                const headerArray = [
+                    'ID',
+                    ...Array.from(allHeaders).filter((value) => value !== 'ID'),
+                ];
 
-            // Create CSV string
-            const csvContent = [
-                headerArray.join(','),
-                ...csvRows.map((row) => row.join(',')),
-            ].join('\n');
+                setHeaders(headerArray);
 
-            setCsvOutput(csvContent);
-        } catch (error) {
-            console.error(error);
-            setCsvOutput('');
-            setHeaders([]);
-            setRows([]);
-        }
-    }, []);
+                // Load column visibility from localStorage
+                const storageKey = `columnVisibility_${externalReferenceCode}`;
+                const savedVisibility = localStorage.getItem(storageKey);
+                if (savedVisibility) {
+                    try {
+                        const parsed = JSON.parse(savedVisibility);
+                        // Initialize visibility for all headers (default: true)
+                        const initialVisibility: Record<string, boolean> = {};
+                        headerArray.forEach((header) => {
+                            initialVisibility[header] =
+                                parsed[header] !== undefined
+                                    ? parsed[header]
+                                    : true;
+                        });
+                        setColumnVisibility(initialVisibility);
+                    } catch (error) {
+                        console.error(
+                            'Error parsing column visibility:',
+                            error
+                        );
+                        // Initialize all columns as visible
+                        const initialVisibility: Record<string, boolean> = {};
+                        headerArray.forEach((header) => {
+                            initialVisibility[header] = true;
+                        });
+                        setColumnVisibility(initialVisibility);
+                    }
+                } else {
+                    // Initialize all columns as visible
+                    const initialVisibility: Record<string, boolean> = {};
+                    headerArray.forEach((header) => {
+                        initialVisibility[header] = true;
+                    });
+                    setColumnVisibility(initialVisibility);
+                }
+
+                // Create CSV content
+                const csvRows = dataArray.map((item) => {
+                    return headerArray.map((header) => {
+                        const value = item[header];
+                        // Handle different value types and escape commas and quotes
+                        if (value === null || value === undefined) return '';
+                        if (typeof value === 'object') return value;
+                        return value;
+                    });
+                });
+
+                setRows(csvRows);
+
+                // Create CSV string
+                const csvContent = [
+                    headerArray.join(','),
+                    ...csvRows.map((row) => row.join(',')),
+                ].join('\n');
+
+                setCsvOutput(csvContent);
+            } catch (error) {
+                console.error(error);
+                setCsvOutput('');
+                setHeaders([]);
+                setRows([]);
+            }
+        },
+        [externalReferenceCode]
+    );
 
     useEffect(() => {
         if (data) {
             convertJsonToCsv(data);
         }
     }, [convertJsonToCsv, data]);
+
+    // Save column visibility to localStorage whenever it changes
+    useEffect(() => {
+        if (Object.keys(columnVisibility).length > 0 && externalReferenceCode) {
+            const storageKey = `columnVisibility_${externalReferenceCode}`;
+            localStorage.setItem(storageKey, JSON.stringify(columnVisibility));
+        }
+    }, [columnVisibility, externalReferenceCode]);
+
+    const toggleColumnVisibility = (header: string) => {
+        setColumnVisibility((prev) => ({
+            ...prev,
+            [header]: !prev[header],
+        }));
+    };
+
+    const visibleHeaders = headers.filter(
+        (header) => columnVisibility[header] !== false
+    );
 
     const downloadCsv = () => {
         if (!csvOutput) return;
@@ -201,15 +273,52 @@ export default function JsonToCsvConverter({
         <div>
             <Card>
                 <CardHeader>
-                    <CardTitle>
-                        {`${getLocalizedField(objectDefinition.label)} (${
-                            entriesPage.totalCount
-                        })`}
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>
+                                {`${getLocalizedField(
+                                    objectDefinition.label
+                                )} (${entriesPage?.totalCount ?? 0})`}
+                            </CardTitle>
 
-                    <CardDescription>
-                        {objectDefinition.restContextPath}
-                    </CardDescription>
+                            <CardDescription className="mt-1">
+                                {objectDefinition.restContextPath}
+                            </CardDescription>
+                        </div>
+                        {csvOutput && headers.length > 0 && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                        <Columns className="h-4 w-4 mr-2" />
+                                        Columns
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="end"
+                                    className="w-56"
+                                >
+                                    <DropdownMenuLabel>
+                                        Toggle Columns
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {headers.map((header) => (
+                                        <DropdownMenuCheckboxItem
+                                            key={header}
+                                            checked={
+                                                columnVisibility[header] !==
+                                                false
+                                            }
+                                            onCheckedChange={() =>
+                                                toggleColumnVisibility(header)
+                                            }
+                                        >
+                                            {header}
+                                        </DropdownMenuCheckboxItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                    </div>
                 </CardHeader>
 
                 <CardContent>
@@ -218,7 +327,7 @@ export default function JsonToCsvConverter({
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        {headers.map((header, index) => (
+                                        {visibleHeaders.map((header, index) => (
                                             <TableHead key={index}>
                                                 {header}
                                             </TableHead>
@@ -233,75 +342,103 @@ export default function JsonToCsvConverter({
                                 <TableBody>
                                     {rows.map((row, rowIndex) => (
                                         <TableRow key={rowIndex}>
-                                            {row.map((cell, cellIndex) => {
-                                                const cellType = typeof cell;
+                                            {row
+                                                .map((cell, cellIndex) => ({
+                                                    cell,
+                                                    cellIndex,
+                                                    header: headers[cellIndex],
+                                                }))
+                                                .filter(
+                                                    ({ header }) =>
+                                                        columnVisibility[
+                                                            header
+                                                        ] !== false
+                                                )
+                                                .map(
+                                                    (
+                                                        { cell },
+                                                        filteredIndex
+                                                    ) => {
+                                                        const cellType =
+                                                            typeof cell;
 
-                                                let value =
-                                                    cell || ('<empty>' as any);
+                                                        let value =
+                                                            cell ||
+                                                            ('<empty>' as any);
 
-                                                if (
-                                                    React.isValidElement(cell)
-                                                ) {
-                                                    return (
-                                                        <TableCell
-                                                            key={cellIndex}
-                                                        >
-                                                            {cell}
-                                                        </TableCell>
-                                                    );
-                                                }
+                                                        if (
+                                                            React.isValidElement(
+                                                                cell
+                                                            )
+                                                        ) {
+                                                            return (
+                                                                <TableCell
+                                                                    key={`${rowIndex}-${filteredIndex}`}
+                                                                >
+                                                                    {cell}
+                                                                </TableCell>
+                                                            );
+                                                        }
 
-                                                if (cellType === 'object') {
-                                                    return (
-                                                        <TableCell
-                                                            key={cellIndex}
-                                                            className="p-4"
-                                                        >
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => {
-                                                                    setSelectedJsonData(
+                                                        if (
+                                                            cellType ===
+                                                            'object'
+                                                        ) {
+                                                            return (
+                                                                <TableCell
+                                                                    key={`${rowIndex}-${filteredIndex}`}
+                                                                    className="p-4"
+                                                                >
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() => {
+                                                                            setSelectedJsonData(
+                                                                                cell
+                                                                            );
+                                                                            setIsJsonModalOpen(
+                                                                                true
+                                                                            );
+                                                                        }}
+                                                                        className="gap-2"
+                                                                    >
+                                                                        <FileJson className="h-4 w-4" />
+                                                                        View
+                                                                        JSON
+                                                                    </Button>
+                                                                </TableCell>
+                                                            );
+                                                        }
+
+                                                        if (
+                                                            cellType ===
+                                                            'boolean'
+                                                        ) {
+                                                            value = (
+                                                                <Badge
+                                                                    variant={
                                                                         cell
-                                                                    );
-                                                                    setIsJsonModalOpen(
-                                                                        true
-                                                                    );
-                                                                }}
-                                                                className="gap-2"
+                                                                            ? 'default'
+                                                                            : 'secondary'
+                                                                    }
+                                                                >
+                                                                    {JSON.stringify(
+                                                                        cell
+                                                                    )}
+                                                                </Badge>
+                                                            );
+                                                        }
+
+                                                        return (
+                                                            <TableCell
+                                                                className="p-4"
+                                                                key={`${rowIndex}-${filteredIndex}`}
                                                             >
-                                                                <FileJson className="h-4 w-4" />
-                                                                View JSON
-                                                            </Button>
-                                                        </TableCell>
-                                                    );
-                                                }
-
-                                                if (cellType === 'boolean') {
-                                                    value = (
-                                                        <Badge
-                                                            variant={
-                                                                cell
-                                                                    ? 'default'
-                                                                    : 'secondary'
-                                                            }
-                                                        >
-                                                            {JSON.stringify(
-                                                                cell
-                                                            )}
-                                                        </Badge>
-                                                    );
-                                                }
-
-                                                return (
-                                                    <TableCell
-                                                        className="p-4"
-                                                        key={cellIndex}
-                                                    >
-                                                        {value}
-                                                    </TableCell>
-                                                );
-                                            })}
+                                                                {value}
+                                                            </TableCell>
+                                                        );
+                                                    }
+                                                )}
 
                                             <TableCell className="sticky right-0 bg-background">
                                                 <DropdownMenu>
@@ -355,17 +492,19 @@ export default function JsonToCsvConverter({
                     )}
                 </CardContent>
 
-                <CardContent className="py-4">
-                    <PaginationControls
-                        currentCount={rows.length}
-                        currentPage={currentPage}
-                        onPageChange={handlePageChange}
-                        onPageSizeChange={handlePageSizeChange}
-                        pageSize={pageSize}
-                        totalCount={entriesPage.totalCount}
-                        totalPages={totalPages}
-                    />
-                </CardContent>
+                {csvOutput && headers.length > 0 && (
+                    <CardContent className="py-4">
+                        <PaginationControls
+                            currentCount={rows.length}
+                            currentPage={currentPage}
+                            onPageChange={handlePageChange}
+                            onPageSizeChange={handlePageSizeChange}
+                            pageSize={pageSize}
+                            totalCount={entriesPage.totalCount}
+                            totalPages={totalPages}
+                        />
+                    </CardContent>
+                )}
 
                 {csvOutput && (
                     <CardFooter>
