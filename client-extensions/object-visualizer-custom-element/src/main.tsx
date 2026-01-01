@@ -25,10 +25,15 @@ class ShadcnCustomElement extends HTMLElement {
             this.root.render(
                 <ShadcnContextProvider shadowRoot={this.shadowRoot}>
                     <RouterProvider router={router} />
-                </ShadcnContextProvider>
+                </ShadcnContextProvider>,
             );
         }
     }
 }
 
-customElements.define('object-visualizer-custom-element', ShadcnCustomElement);
+if (!customElements.get('object-visualizer-custom-element')) {
+    customElements.define(
+        'object-visualizer-custom-element',
+        ShadcnCustomElement,
+    );
+}

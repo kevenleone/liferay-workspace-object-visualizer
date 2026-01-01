@@ -87,16 +87,14 @@ function RouteComponent() {
                     {item.id}
                 </Badge>
             ),
-            createDate: (item, { objectDefinition }) =>
-                new Date(
-                    objectDefinition.system ? item.createDate : item.dateCreated
-                ).toLocaleString(Liferay.ThemeDisplay.getBCP47LanguageId()),
-            modifiedDate: (item, { objectDefinition }) =>
-                new Date(
-                    objectDefinition.system
-                        ? item.modifiedDate
-                        : item.dateModified
-                ).toLocaleString(Liferay.ThemeDisplay.getBCP47LanguageId()),
+            createDate: (item) =>
+                new Date(item.createDate || item.dateCreated).toLocaleString(
+                    Liferay.ThemeDisplay.getBCP47LanguageId()
+                ),
+            modifiedDate: (item) =>
+                new Date(item.modifiedDate || item.dateModified).toLocaleString(
+                    Liferay.ThemeDisplay.getBCP47LanguageId()
+                ),
             status: (_item, { objectEntry }) => (
                 <Badge variant={objectEntry?.code ? 'default' : 'secondary'}>
                     {objectEntry?.label_i18n}

@@ -24,14 +24,14 @@ export const Route = createFileRoute('/p/$externalReferenceCode/query')({
                 typeof search.page === 'string'
                     ? parseInt(search.page, 10)
                     : typeof search.page === 'number'
-                    ? search.page
-                    : 1,
+                      ? search.page
+                      : 1,
             pageSize:
                 typeof search.pageSize === 'string'
                     ? parseInt(search.pageSize, 10)
                     : typeof search.pageSize === 'number'
-                    ? search.pageSize
-                    : 10,
+                      ? search.pageSize
+                      : 10,
         };
     },
     loaderDeps: ({ search }) => ({
@@ -136,7 +136,7 @@ function RouteComponent() {
                 h?.query === query &&
                 (h?.rowCount === undefined ||
                     h?.status === undefined ||
-                    (status === 'error' && h?.error === undefined))
+                    (status === 'error' && h?.error === undefined)),
         );
         if (idx > -1) {
             history[idx] = {
@@ -185,7 +185,7 @@ function RouteComponent() {
                 options: {
                     objectDefinition: ObjectDefinition;
                     objectEntry: any;
-                }
+                },
             ) => any
         > = {
             id: (item) => (
@@ -195,13 +195,15 @@ function RouteComponent() {
             ),
             createDate: (item, { objectDefinition }) =>
                 new Date(
-                    objectDefinition.system ? item.createDate : item.dateCreated
+                    objectDefinition.system
+                        ? item.createDate
+                        : item.dateCreated,
                 ).toLocaleString(Liferay.ThemeDisplay.getBCP47LanguageId()),
             modifiedDate: (item, { objectDefinition }) =>
                 new Date(
                     objectDefinition.system
                         ? item.modifiedDate
-                        : item.dateModified
+                        : item.dateModified,
                 ).toLocaleString(Liferay.ThemeDisplay.getBCP47LanguageId()),
             status: (_item, { objectEntry }) => (
                 <Badge variant={objectEntry?.code ? 'default' : 'secondary'}>
@@ -215,7 +217,7 @@ function RouteComponent() {
             fieldName: string,
             item: any,
             objectDefinition: ObjectDefinition,
-            objectEntry: any
+            objectEntry: any,
         ): any => {
             const transformer = fieldTransformers[fieldName];
 
@@ -250,7 +252,7 @@ function RouteComponent() {
                         objectField.name,
                         item,
                         objectDefinition,
-                        objectEntry
+                        objectEntry,
                     );
                 } else {
                     newItem[fieldLabel] = objectEntry;

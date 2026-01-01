@@ -20,7 +20,7 @@ function DialogTrigger({
 function DialogPortal({
     ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-    const {shadowRoot} = useShadcnContext();
+    const { shadowRoot } = useShadcnContext();
 
     return (
         <DialogPrimitive.Portal

@@ -201,9 +201,7 @@ export function Sidebar({
                                                             </div>
                                                             <div className="text-xs text-gray-500 truncate">
                                                                 {object.fields}{' '}
-                                                                fields •{' '}
-                                                                {object.entries}{' '}
-                                                                entries
+                                                                fields
                                                             </div>
                                                         </div>
                                                         <div
