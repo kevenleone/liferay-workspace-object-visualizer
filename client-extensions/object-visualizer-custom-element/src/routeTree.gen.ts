@@ -18,7 +18,6 @@ import { Route as PExternalReferenceCodeRouteRouteImport } from './routes/p/$ext
 import { Route as PExternalReferenceCodeIndexRouteImport } from './routes/p/$externalReferenceCode/index'
 import { Route as PExternalReferenceCodeSchemaRouteImport } from './routes/p/$externalReferenceCode/schema'
 import { Route as PExternalReferenceCodeQueryRouteImport } from './routes/p/$externalReferenceCode/query'
-import { Route as PExternalReferenceCodeLiveRouteImport } from './routes/p/$externalReferenceCode/live'
 
 const EnvironmentsRoute = EnvironmentsRouteImport.update({
   id: '/environments',
@@ -69,12 +68,6 @@ const PExternalReferenceCodeQueryRoute =
     path: '/query',
     getParentRoute: () => PExternalReferenceCodeRouteRoute,
   } as any)
-const PExternalReferenceCodeLiveRoute =
-  PExternalReferenceCodeLiveRouteImport.update({
-    id: '/live',
-    path: '/live',
-    getParentRoute: () => PExternalReferenceCodeRouteRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -83,7 +76,6 @@ export interface FileRoutesByFullPath {
   '/environments': typeof EnvironmentsRoute
   '/p/$externalReferenceCode': typeof PExternalReferenceCodeRouteRouteWithChildren
   '/p/': typeof PIndexRoute
-  '/p/$externalReferenceCode/live': typeof PExternalReferenceCodeLiveRoute
   '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
   '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
   '/p/$externalReferenceCode/': typeof PExternalReferenceCodeIndexRoute
@@ -93,7 +85,6 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/environments': typeof EnvironmentsRoute
   '/p': typeof PIndexRoute
-  '/p/$externalReferenceCode/live': typeof PExternalReferenceCodeLiveRoute
   '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
   '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
   '/p/$externalReferenceCode': typeof PExternalReferenceCodeIndexRoute
@@ -106,7 +97,6 @@ export interface FileRoutesById {
   '/environments': typeof EnvironmentsRoute
   '/p/$externalReferenceCode': typeof PExternalReferenceCodeRouteRouteWithChildren
   '/p/': typeof PIndexRoute
-  '/p/$externalReferenceCode/live': typeof PExternalReferenceCodeLiveRoute
   '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
   '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
   '/p/$externalReferenceCode/': typeof PExternalReferenceCodeIndexRoute
@@ -120,7 +110,6 @@ export interface FileRouteTypes {
     | '/environments'
     | '/p/$externalReferenceCode'
     | '/p/'
-    | '/p/$externalReferenceCode/live'
     | '/p/$externalReferenceCode/query'
     | '/p/$externalReferenceCode/schema'
     | '/p/$externalReferenceCode/'
@@ -130,7 +119,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/environments'
     | '/p'
-    | '/p/$externalReferenceCode/live'
     | '/p/$externalReferenceCode/query'
     | '/p/$externalReferenceCode/schema'
     | '/p/$externalReferenceCode'
@@ -142,7 +130,6 @@ export interface FileRouteTypes {
     | '/environments'
     | '/p/$externalReferenceCode'
     | '/p/'
-    | '/p/$externalReferenceCode/live'
     | '/p/$externalReferenceCode/query'
     | '/p/$externalReferenceCode/schema'
     | '/p/$externalReferenceCode/'
@@ -220,18 +207,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PExternalReferenceCodeQueryRouteImport
       parentRoute: typeof PExternalReferenceCodeRouteRoute
     }
-    '/p/$externalReferenceCode/live': {
-      id: '/p/$externalReferenceCode/live'
-      path: '/live'
-      fullPath: '/p/$externalReferenceCode/live'
-      preLoaderRoute: typeof PExternalReferenceCodeLiveRouteImport
-      parentRoute: typeof PExternalReferenceCodeRouteRoute
-    }
   }
 }
 
 interface PExternalReferenceCodeRouteRouteChildren {
-  PExternalReferenceCodeLiveRoute: typeof PExternalReferenceCodeLiveRoute
   PExternalReferenceCodeQueryRoute: typeof PExternalReferenceCodeQueryRoute
   PExternalReferenceCodeSchemaRoute: typeof PExternalReferenceCodeSchemaRoute
   PExternalReferenceCodeIndexRoute: typeof PExternalReferenceCodeIndexRoute
@@ -239,7 +218,6 @@ interface PExternalReferenceCodeRouteRouteChildren {
 
 const PExternalReferenceCodeRouteRouteChildren: PExternalReferenceCodeRouteRouteChildren =
   {
-    PExternalReferenceCodeLiveRoute: PExternalReferenceCodeLiveRoute,
     PExternalReferenceCodeQueryRoute: PExternalReferenceCodeQueryRoute,
     PExternalReferenceCodeSchemaRoute: PExternalReferenceCodeSchemaRoute,
     PExternalReferenceCodeIndexRoute: PExternalReferenceCodeIndexRoute,

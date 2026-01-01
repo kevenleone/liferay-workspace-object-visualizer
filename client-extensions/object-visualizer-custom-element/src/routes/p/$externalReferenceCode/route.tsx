@@ -38,14 +38,12 @@ function RouteComponent() {
         { path: '/', icon: Eye, label: 'Data' },
         { path: 'schema', icon: Code, label: 'Schema' },
         { path: 'query', icon: Play, label: 'Query' },
-        { path: 'analytics', icon: BarChart3, label: 'Analytics' },
-        { path: 'live', icon: Activity, label: 'Live Feed' },
     ];
 
     const activeRoute = navItems.some(({ path }) => pathname.endsWith(path));
 
     return (
-        <div className="flex-1 flex flex-col bg-background overflow-y-auto">
+        <div className="flex-1 flex flex-col bg-background min-h-0">
             <div className="border-b border-border p-6">
                 <div className="flex items-center gap-3 mb-4">
                     <Table className="h-6 w-6 text-primary" />
@@ -83,7 +81,7 @@ function RouteComponent() {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden min-h-0">
                 <div className="h-full p-6 overflow-auto">
                     <Outlet />
                 </div>
