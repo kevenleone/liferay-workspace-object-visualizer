@@ -28,12 +28,18 @@ export const Route = createFileRoute('/p')({
 function RouteComponent() {
     const objectDefinitions = Route.useLoaderData();
     const [showExportImport, setShowExportImport] = useState(false);
+    const [exportImportInitialTab, setExportImportInitialTab] = useState<
+        'export' | 'import'
+    >('export');
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-background">
             <Sidebar
                 objectDefinitions={objectDefinitions}
-                onExportImport={() => setShowExportImport(true)}
+                onExportImport={(initialTab) => {
+                    setExportImportInitialTab(initialTab ?? 'export');
+                    setShowExportImport(true);
+                }}
             />
 
             <div className="flex-1 min-w-0">
@@ -43,6 +49,8 @@ function RouteComponent() {
             <ExportImportDialog
                 open={showExportImport}
                 onOpenChange={setShowExportImport}
+                objectDefinitions={objectDefinitions}
+                initialTab={exportImportInitialTab}
             />
         </div>
     );

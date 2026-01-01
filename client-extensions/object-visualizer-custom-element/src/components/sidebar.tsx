@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
 import {
     ChevronDown,
@@ -20,17 +20,23 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { getAbbreviation, getLocalizedField } from '@/utils';
 
 interface SidebarProps {
-    onExportImport?: () => void;
+    onExportImport?: (initialTab?: 'export' | 'import') => void;
     objectDefinitions: Required<ObjectDefinition>[];
 }
 
 export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
     const location = useLocation();
     const navigate = useNavigate();
-    const [collapsed, onToggleCollapse] = useState(false);
+    const [collapsed, onToggleCollapse] = useState<boolean>(() => {
+        try {
+            const saved = localStorage.getItem('sidebarCollapsed');
+            return saved ? JSON.parse(saved) === true : false;
+        } catch {
+            return false;
+        }
+    });
     const [searchQuery, setSearchQuery] = useState('');
     const [syncEnabled, setSyncEnabled] = useState(true);
 
@@ -39,13 +45,13 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
         .filter(Boolean);
 
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-        new Set([''])
+        new Set(['']),
     );
 
     const objectDefinitionGroups = Object.groupBy(
         objectDefinitions,
         (objectDefinition) =>
-            objectDefinition.objectFolderExternalReferenceCode as string
+            objectDefinition.objectFolderExternalReferenceCode as string,
     );
 
     const toggleGroup = (groupName: string) => {
@@ -64,11 +70,19 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
         navigate({ to: `/p/${objectDefinition.externalReferenceCode}` });
     };
 
+    useEffect(() => {
+        try {
+            localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
+        } catch {
+            void 0;
+        }
+    }, [collapsed]);
+
     return (
         <div
             className={cn(
                 'bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out overflow-hidden',
-                collapsed ? 'w-16 min-w-16 max-w-16' : 'w-80 min-w-80 max-w-80'
+                collapsed ? 'w-16 min-w-16 max-w-16' : 'w-80 min-w-80 max-w-80',
             )}
         >
             {/* Header */}
@@ -90,7 +104,7 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                     <ChevronLeft
                         className={cn(
                             'h-5 w-5 text-gray-600 transition-transform',
-                            collapsed && 'rotate-180'
+                            collapsed && 'rotate-180',
                         )}
                     />
                 </button>
@@ -114,52 +128,7 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
             {/* Objects List with Groups */}
             <ScrollArea className="flex-1">
                 <div className={cn(collapsed ? 'p-1' : 'p-2')}>
-                    {collapsed ? (
-                        <>
-                            {Object.entries(objectDefinitionGroups).map(
-                                ([group, objectDefinitions]) => (
-                                    <div key={group} className="mb-2">
-                                        <span
-                                            className="text-center align-middle flex justify-center text-xs uppercase bg-cyan-800 text-white rounded-sm"
-                                            title={group}
-                                        >
-                                            {getAbbreviation(group)}
-                                        </span>
-
-                                        {(
-                                            objectDefinitions as ObjectDefinition[]
-                                        ).map((objectDefinition) => (
-                                            <Button
-                                                key={objectDefinition.name}
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    onSelectObject(
-                                                        objectDefinition
-                                                    )
-                                                }
-                                                className={cn(
-                                                    'w-full justify-center p-2 h-auto hover:bg-gray-100',
-                                                    {
-                                                        'bg-blue-50 text-blue-900':
-                                                            externalReferenceCode ===
-                                                            objectDefinition.externalReferenceCode,
-                                                    }
-                                                )}
-                                                title={getLocalizedField(
-                                                    objectDefinition.label
-                                                )}
-                                            >
-                                                <Table className="h-4 w-4" />
-                                            </Button>
-                                        ))}
-
-                                        <hr></hr>
-                                    </div>
-                                )
-                            )}
-                        </>
-                    ) : (
+                    {collapsed ? null : (
                         <>
                             {Object.entries(objectDefinitionGroups).map(
                                 ([group, _objectDefinitions], index) => {
@@ -170,7 +139,9 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                                     ).filter((objectDefinition) =>
                                         objectDefinition?.name
                                             ?.toLowerCase()
-                                            .includes(searchQuery.toLowerCase())
+                                            .includes(
+                                                searchQuery.toLowerCase(),
+                                            ),
                                     );
 
                                     return (
@@ -214,14 +185,14 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                                                                 size="sm"
                                                                 onClick={() =>
                                                                     onSelectObject(
-                                                                        objectDefinition
+                                                                        objectDefinition,
                                                                     )
                                                                 }
                                                                 className={cn(
                                                                     'w-full justify-start p-2 h-auto text-left hover:bg-gray-100 overflow-hidden',
                                                                     externalReferenceCode ===
                                                                         objectDefinition.externalReferenceCode &&
-                                                                        'bg-blue-50 text-blue-900 border border-blue-200'
+                                                                        'bg-blue-50 text-blue-900 border border-blue-200',
                                                                 )}
                                                             >
                                                                 <div className="flex items-center gap-2 w-full min-w-0">
@@ -239,7 +210,6 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                                                                                     ?.length
                                                                             }{' '}
                                                                             fields
-                                                                            •{' '}
                                                                         </div>
                                                                     </div>
                                                                     <div
@@ -247,7 +217,7 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                                                                             'text-xs px-1.5 py-0.5 rounded shrink-0',
                                                                             objectDefinition.system
                                                                                 ? 'bg-blue-100 text-blue-700'
-                                                                                : 'bg-gray-100 text-gray-700'
+                                                                                : 'bg-gray-100 text-gray-700',
                                                                         )}
                                                                     >
                                                                         {objectDefinition.system
@@ -256,13 +226,13 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                                                                     </div>
                                                                 </div>
                                                             </Button>
-                                                        )
+                                                        ),
                                                     )}
                                                 </div>
                                             )}
                                         </div>
                                     );
-                                }
+                                },
                             )}
                         </>
                     )}
@@ -299,7 +269,10 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                         <Button
                             size="sm"
                             variant="outline"
-                            onClick={onExportImport}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                onExportImport?.('export');
+                            }}
                             className="flex-1 text-xs bg-transparent"
                         >
                             <Download className="h-3 w-3 mr-1 shrink-0" />
@@ -308,7 +281,10 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                         <Button
                             size="sm"
                             variant="outline"
-                            onClick={onExportImport}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                onExportImport?.('import');
+                            }}
                             className="flex-1 text-xs bg-transparent"
                         >
                             <Upload className="h-3 w-3 mr-1 shrink-0" />
@@ -322,7 +298,10 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
             {collapsed && (
                 <div className="p-2 border-t border-gray-200 space-y-2 shrink-0">
                     <button
-                        onClick={onExportImport}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            onExportImport?.('export');
+                        }}
                         className="w-full p-2 hover:bg-gray-100 rounded-md transition-colors flex justify-center"
                         title="Export/Import"
                     >
