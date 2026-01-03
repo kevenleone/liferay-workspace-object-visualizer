@@ -1,7 +1,6 @@
 import { createRoot, Root } from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
 
-import ShadcnContextProvider from './context/ShadcnContextProvider.tsx';
 import tailwindStyleSheet from './core/tailwind-ui.ts';
 import { router } from './core/tanstack-router.ts';
 
@@ -23,9 +22,10 @@ class ShadcnCustomElement extends HTMLElement {
 
             this.root = createRoot(mountPoint);
             this.root.render(
-                <ShadcnContextProvider shadowRoot={this.shadowRoot}>
-                    <RouterProvider router={router} />
-                </ShadcnContextProvider>,
+                <RouterProvider
+                    context={{ shadowRoot: this.shadowRoot }}
+                    router={router}
+                />,
             );
         }
     }

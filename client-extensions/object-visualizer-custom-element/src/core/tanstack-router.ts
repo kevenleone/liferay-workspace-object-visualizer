@@ -6,6 +6,7 @@ const hashHistory = createHashHistory();
 
 export const router = createRouter({
     basepath: '/',
+    context: { shadowRoot: document },
     history: hashHistory,
     routeTree,
 });
