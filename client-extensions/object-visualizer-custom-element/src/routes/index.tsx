@@ -4,7 +4,7 @@ export const Route = createFileRoute('/')({
     component: RouteComponent,
 });
 
-const showEnvironments = false;
+const showEnvironments = true;
 
 function RouteComponent() {
     if (showEnvironments) {

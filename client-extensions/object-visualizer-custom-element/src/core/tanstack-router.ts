@@ -11,6 +11,8 @@ export const router = createRouter({
     routeTree,
 });
 
+console.log('Hi');
+
 declare module '@tanstack/react-router' {
     interface Register {
         router: typeof router;

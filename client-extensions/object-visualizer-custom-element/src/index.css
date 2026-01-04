@@ -48,6 +48,18 @@
     --foreground: 240 10% 3.9%;
     --border: 240 5% 91%;
     --ring: 240 5% 64%;
+
+    /* display: block;
+    height: 100vh;
+    @apply block h-screen;
+
+    [data-scroll-locked][data-scroll-locked] {
+        overflow: auto !important;
+    }
+
+    [data-scroll-locked] {
+        margin-right: 0 !important;
+    } */
     /* etc */
 }
 
@@ -159,4 +171,8 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+}
+
+[data-scroll-locked][data-scroll-locked] {
+    overflow: scroll !important;
 }
