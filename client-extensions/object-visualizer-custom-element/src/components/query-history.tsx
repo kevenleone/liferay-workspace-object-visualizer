@@ -57,9 +57,13 @@ export function QueryHistory({ externalReferenceCode }: QueryHistoryProps) {
                 setQueryHistory([]);
             }
         };
+
         loadHistory();
+
         const handler = () => loadHistory();
+
         window.addEventListener('queryHistoryUpdated', handler);
+
         return () => {
             window.removeEventListener('queryHistoryUpdated', handler);
         };
@@ -82,9 +86,14 @@ export function QueryHistory({ externalReferenceCode }: QueryHistoryProps) {
         try {
             const savedHistory = localStorage.getItem(storageKey);
             const current = savedHistory ? JSON.parse(savedHistory) : [];
-            const next = current.filter((item: QueryHistoryItem) => item.id !== id);
+            const next = current.filter(
+                (item: QueryHistoryItem) => item.id !== id,
+            );
+
             localStorage.setItem(storageKey, JSON.stringify(next));
+
             setQueryHistory(next);
+
             window.dispatchEvent(new Event('queryHistoryUpdated'));
         } catch {
             // noop
@@ -103,7 +112,8 @@ export function QueryHistory({ externalReferenceCode }: QueryHistoryProps) {
                 <ScrollArea className="h-96">
                     {queryHistory.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
-                            No query history yet. Execute a query to save it here.
+                            No query history yet. Execute a query to save it
+                            here.
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -114,7 +124,8 @@ export function QueryHistory({ externalReferenceCode }: QueryHistoryProps) {
                                 >
                                     <div className="flex items-start justify-between mb-2">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            {historyItem.status === 'success' ? (
+                                            {historyItem.status ===
+                                            'success' ? (
                                                 <CheckCircle className="h-4 w-4 text-green-500" />
                                             ) : (
                                                 <XCircle className="h-4 w-4 text-red-500" />
@@ -123,33 +134,54 @@ export function QueryHistory({ externalReferenceCode }: QueryHistoryProps) {
                                                 {historyItem.executedAt}
                                             </span>
                                             {historyItem.duration && (
-                                                <Badge variant="outline" className="text-xs">
+                                                <Badge
+                                                    variant="outline"
+                                                    className="text-xs"
+                                                >
                                                     <Clock className="h-3 w-3 mr-1" />
                                                     {historyItem.duration}
                                                 </Badge>
                                             )}
                                             {historyItem.status === 'success' &&
                                                 historyItem.rowCount && (
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        {historyItem.rowCount} rows
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="text-xs"
+                                                    >
+                                                        {historyItem.rowCount}{' '}
+                                                        rows
                                                     </Badge>
                                                 )}
                                         </div>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0"
+                                                >
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => loadQuery(historyItem.query)}>
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        loadQuery(
+                                                            historyItem.query,
+                                                        )
+                                                    }
+                                                >
                                                     <Copy className="h-4 w-4 mr-2" />
                                                     Load Query
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
                                                     className="text-destructive"
-                                                    onClick={() => deleteQuery(historyItem.id)}
+                                                    onClick={() =>
+                                                        deleteQuery(
+                                                            historyItem.id,
+                                                        )
+                                                    }
                                                 >
                                                     <Trash2 className="h-4 w-4 mr-2" />
                                                     Delete
@@ -162,11 +194,14 @@ export function QueryHistory({ externalReferenceCode }: QueryHistoryProps) {
                                             GET {historyItem.endpoint}
                                         </div>
                                         <code className="text-sm bg-muted p-2 rounded block overflow-x-auto">
-                                            {historyItem.query || '(no parameters)'}
+                                            {historyItem.query ||
+                                                '(no parameters)'}
                                         </code>
                                     </div>
                                     {historyItem.error && (
-                                        <div className="mt-2 text-sm text-destructive">{historyItem.error}</div>
+                                        <div className="mt-2 text-sm text-destructive">
+                                            {historyItem.error}
+                                        </div>
                                     )}
                                 </div>
                             ))}
@@ -177,4 +212,3 @@ export function QueryHistory({ externalReferenceCode }: QueryHistoryProps) {
         </Card>
     );
 }
-

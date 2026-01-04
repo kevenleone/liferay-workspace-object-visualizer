@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import JsonToCsvConverter from '@/components/dynamic-table';
 import { Badge } from '@/components/ui/badge';
 import { Liferay } from '@/lib/liferay';
@@ -6,7 +7,27 @@ import {
     ObjectDefinition,
     ObjectField,
 } from 'liferay-headless-rest-client/object-admin-v1.0';
-import { useMemo } from 'react';
+import { StorageKeys } from '@/utils/storage';
+
+function setObjectDefinitionTotalCount(
+    externalReferenceCode: string,
+    totalCount: number,
+) {
+    let objectDefinitionCount = localStorage.getItem(
+        StorageKeys.DEFINITION_COUNT,
+    ) as any;
+
+    objectDefinitionCount = objectDefinitionCount
+        ? JSON.parse(objectDefinitionCount)
+        : {};
+
+    objectDefinitionCount[externalReferenceCode] = totalCount;
+
+    localStorage.setItem(
+        StorageKeys.DEFINITION_COUNT,
+        JSON.stringify(objectDefinitionCount),
+    );
+}
 
 export const Route = createFileRoute('/p/$externalReferenceCode/')({
     component: RouteComponent,
@@ -16,14 +37,14 @@ export const Route = createFileRoute('/p/$externalReferenceCode/')({
                 typeof search.page === 'string'
                     ? parseInt(search.page, 10)
                     : typeof search.page === 'number'
-                    ? search.page
-                    : 1,
+                      ? search.page
+                      : 1,
             pageSize:
                 typeof search.pageSize === 'string'
                     ? parseInt(search.pageSize, 10)
                     : typeof search.pageSize === 'number'
-                    ? search.pageSize
-                    : 10,
+                      ? search.pageSize
+                      : 10,
         };
     },
     loaderDeps: ({ search }) => ({
@@ -35,17 +56,26 @@ export const Route = createFileRoute('/p/$externalReferenceCode/')({
         const page = deps.page;
         const pageSize = deps.pageSize;
 
+        console.log({ loaderData });
         try {
             const url = new URL(
                 loaderData?.restContextPath as string,
-                window.location.origin
+                window.location.origin,
             );
+
             url.searchParams.set('page', String(page));
             url.searchParams.set('pageSize', String(pageSize));
 
             const response = await Liferay.Util.fetch(url.toString());
 
             const data = await response.json();
+
+            if (data && loaderData?.externalReferenceCode) {
+                setObjectDefinitionTotalCount(
+                    loaderData?.externalReferenceCode,
+                    data.totalCount ?? 0,
+                );
+            }
 
             return data;
         } catch (error) {
@@ -79,7 +109,7 @@ function RouteComponent() {
                 options: {
                     objectDefinition: ObjectDefinition;
                     objectEntry: any;
-                }
+                },
             ) => any
         > = {
             id: (item) => (
@@ -89,11 +119,11 @@ function RouteComponent() {
             ),
             createDate: (item) =>
                 new Date(item.createDate || item.dateCreated).toLocaleString(
-                    Liferay.ThemeDisplay.getBCP47LanguageId()
+                    Liferay.ThemeDisplay.getBCP47LanguageId(),
                 ),
             modifiedDate: (item) =>
                 new Date(item.modifiedDate || item.dateModified).toLocaleString(
-                    Liferay.ThemeDisplay.getBCP47LanguageId()
+                    Liferay.ThemeDisplay.getBCP47LanguageId(),
                 ),
             status: (_item, { objectEntry }) => (
                 <Badge variant={objectEntry?.code ? 'default' : 'secondary'}>
@@ -107,7 +137,7 @@ function RouteComponent() {
             fieldName: string,
             item: any,
             objectDefinition: ObjectDefinition,
-            objectEntry: any
+            objectEntry: any,
         ): any => {
             const transformer = fieldTransformers[fieldName];
 
@@ -142,7 +172,7 @@ function RouteComponent() {
                         objectField.name,
                         item,
                         objectDefinition,
-                        objectEntry
+                        objectEntry,
                     );
                 } else {
                     newItem[fieldLabel] = objectEntry;

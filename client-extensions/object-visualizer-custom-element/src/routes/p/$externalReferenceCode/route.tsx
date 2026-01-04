@@ -1,5 +1,5 @@
 import { getObjectDefinitionByExternalReferenceCode } from 'liferay-headless-rest-client/object-admin-v1.0';
-import { Table, Eye, Code, Play, BarChart3, Activity } from 'lucide-react';
+import { Table, Eye, Code, Play } from 'lucide-react';
 import {
     createFileRoute,
     Outlet,

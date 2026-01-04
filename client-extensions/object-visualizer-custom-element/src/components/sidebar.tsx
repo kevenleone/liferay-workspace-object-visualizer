@@ -20,10 +20,21 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { useLocation, useNavigate } from '@tanstack/react-router';
+import { StorageKeys } from '@/utils/storage';
 
 interface SidebarProps {
     onExportImport?: (initialTab?: 'export' | 'import') => void;
     objectDefinitions: Required<ObjectDefinition>[];
+}
+
+function getDefinitionRows() {
+    const definitionRows = localStorage.getItem(StorageKeys.DEFINITION_COUNT);
+
+    if (definitionRows) {
+        return JSON.parse(definitionRows);
+    }
+
+    return {};
 }
 
 export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
@@ -37,6 +48,8 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
             return false;
         }
     });
+
+    const definitionRows = getDefinitionRows();
     const [searchQuery, setSearchQuery] = useState('');
     const [syncEnabled, setSyncEnabled] = useState(true);
 
@@ -209,7 +222,13 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                                                                                     .objectFields
                                                                                     ?.length
                                                                             }{' '}
-                                                                            fields
+                                                                            fields,
+                                                                            rows{' '}
+                                                                            {definitionRows[
+                                                                                objectDefinition?.externalReferenceCode ||
+                                                                                    ''
+                                                                            ] ||
+                                                                                '?'}
                                                                         </div>
                                                                     </div>
                                                                     <div

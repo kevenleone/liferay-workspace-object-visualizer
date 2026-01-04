@@ -94,7 +94,7 @@ export function SchemaViewer({ objectDefinition }: SchemaViewerProps) {
                         <div className="space-y-3">
                             {objectFields.map((objectField, index) => {
                                 const FieldIcon = getFieldIcon(
-                                    objectField.DBType as string
+                                    objectField.DBType as string,
                                 );
 
                                 return (
@@ -110,7 +110,7 @@ export function SchemaViewer({ objectDefinition }: SchemaViewerProps) {
                                                     title={`name: ${objectField.name}`}
                                                 >
                                                     {getLocalizedField(
-                                                        objectField.label
+                                                        objectField.label,
                                                     )}{' '}
                                                 </span>
                                             </div>
@@ -127,8 +127,8 @@ export function SchemaViewer({ objectDefinition }: SchemaViewerProps) {
                                                     className={cn(
                                                         'text-xs',
                                                         getSourceBadgeColor(
-                                                            objectField.system!
-                                                        )
+                                                            objectField.system!,
+                                                        ),
                                                     )}
                                                 >
                                                     {objectField.system
@@ -191,7 +191,7 @@ export function SchemaViewer({ objectDefinition }: SchemaViewerProps) {
 
                                                 <span className="font-medium">
                                                     {getLocalizedField(
-                                                        objectRelationship.label
+                                                        objectRelationship.label,
                                                     )}
                                                 </span>
                                             </div>
@@ -214,7 +214,7 @@ export function SchemaViewer({ objectDefinition }: SchemaViewerProps) {
                                             </p>
                                         )}
                                     </div>
-                                )
+                                ),
                             )}
                         </div>
                     </CardContent>
