@@ -15,6 +15,7 @@ export type IOAuth2Client = {
 };
 
 type ILiferay = {
+    liferayInstance: boolean;
     CommerceContext: {
         account?: {
             accountId: number | string | null;
@@ -64,12 +65,14 @@ declare global {
 }
 
 export const Liferay = window.Liferay || {
+    liferayInstance: false,
     CommerceContext: {},
     MarketplaceCustomerFlow: 0,
     Service: {},
     ThemeDisplay: {
         getCanonicalURL: () => window.location.href,
         getCompanyGroupId: () => '',
+        getBCP47LanguageId: () => 'en-US',
         getUserEmailAddress: () => '',
         getUserName: () => '',
         getCompanyId: () => '',
@@ -87,6 +90,7 @@ export const Liferay = window.Liferay || {
         },
     },
     Util: {
+        fetch,
         LocalStorage: localStorage,
         SessionStorage: sessionStorage,
     },

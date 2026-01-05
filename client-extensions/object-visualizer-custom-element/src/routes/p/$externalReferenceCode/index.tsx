@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
-import JsonToCsvConverter from '@/components/dynamic-table';
-import { Badge } from '@/components/ui/badge';
-import { Liferay } from '@/lib/liferay';
 import { createFileRoute, useLoaderData } from '@tanstack/react-router';
 import {
     ObjectDefinition,
     ObjectField,
 } from 'liferay-headless-rest-client/object-admin-v1.0';
+
+import { Badge } from '@/components/ui/badge';
+import { Liferay } from '@/lib/liferay';
+import { liferayClient } from '@/lib/headless-client';
 import { StorageKeys } from '@/utils/storage';
+import JsonToCsvConverter from '@/components/dynamic-table';
 
 function setObjectDefinitionTotalCount(
     externalReferenceCode: string,
@@ -66,9 +68,19 @@ export const Route = createFileRoute('/p/$externalReferenceCode/')({
             url.searchParams.set('page', String(page));
             url.searchParams.set('pageSize', String(pageSize));
 
-            const response = await Liferay.Util.fetch(url.toString());
-
-            const data = await response.json();
+            const { data } = (await liferayClient.get({
+                query: {
+                    nestedFields: loaderData?.objectRelationships
+                        ?.map((objectRelationship) => objectRelationship.name)
+                        .join(','),
+                },
+                url: url.pathname,
+            })) as {
+                data: {
+                    totalCount: number;
+                    items: any[];
+                };
+            };
 
             if (data && loaderData?.externalReferenceCode) {
                 setObjectDefinitionTotalCount(
@@ -82,7 +94,10 @@ export const Route = createFileRoute('/p/$externalReferenceCode/')({
             console.error(error);
         }
 
-        return {};
+        return {
+            items: [],
+            totalCount: 0,
+        };
     },
     staleTime: 60000,
 });
@@ -113,7 +128,7 @@ function RouteComponent() {
             ) => any
         > = {
             id: (item) => (
-                <Badge className="bg-emerald-400" variant="destructive">
+                <Badge className="bg-sky-700" variant="destructive">
                     {item.id}
                 </Badge>
             ),

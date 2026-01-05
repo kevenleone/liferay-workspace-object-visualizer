@@ -10,8 +10,9 @@ import {
     FolderOpen,
     RefreshCw,
     Search,
+    Server,
     Table,
-    Upload,
+    TimerReset,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,18 @@ function getDefinitionRows() {
     return {};
 }
 
+function getContrastingTextColor(hex?: string) {
+    if (!hex) return '#111827';
+    const m = /^#?([a-fA-F0-9]{6})$/.exec(hex.trim());
+    if (!m) return '#111827';
+    const n = parseInt(m[1], 16);
+    const r = (n >> 16) & 255;
+    const g = (n >> 8) & 255;
+    const b = n & 255;
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 128 ? '#111827' : '#FFFFFF';
+}
+
 export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
     const location = useLocation();
     const navigate = useNavigate();
@@ -52,6 +65,7 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
     const definitionRows = getDefinitionRows();
     const [searchQuery, setSearchQuery] = useState('');
     const [syncEnabled, setSyncEnabled] = useState(true);
+    const [selectedEnvInfo, setSelectedEnvInfo] = useState<any | null>(null);
 
     const [, externalReferenceCode] = location.pathname
         .split('/')
@@ -61,10 +75,18 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
         new Set(['']),
     );
 
-    const objectDefinitionGroups = Object.groupBy(
-        objectDefinitions,
-        (objectDefinition) =>
-            objectDefinition.objectFolderExternalReferenceCode as string,
+    const objectDefinitionGroups = (objectDefinitions || []).reduce(
+        (acc, objectDefinition) => {
+            const key =
+                (objectDefinition.objectFolderExternalReferenceCode as string) ||
+                '';
+            if (!acc[key]) {
+                acc[key] = [];
+            }
+            acc[key].push(objectDefinition);
+            return acc;
+        },
+        {} as Record<string, typeof objectDefinitions>,
     );
 
     const toggleGroup = (groupName: string) => {
@@ -90,6 +112,21 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
             void 0;
         }
     }, [collapsed]);
+
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem(
+                StorageKeys.SELECTED_ENVIRONMENT_INFO,
+            );
+            if (raw) {
+                setSelectedEnvInfo(JSON.parse(raw));
+            } else {
+                setSelectedEnvInfo(null);
+            }
+        } catch {
+            setSelectedEnvInfo(null);
+        }
+    }, []);
 
     return (
         <div
@@ -261,6 +298,56 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
             {/* Footer Options - hidden when collapsed */}
             {!collapsed && (
                 <div className="p-4 border-t border-gray-200 space-y-3 shrink-0">
+                    {selectedEnvInfo &&
+                        (() => {
+                            const textColor = getContrastingTextColor(
+                                selectedEnvInfo.color,
+                            );
+                            return (
+                                <div
+                                    className="p-3 rounded-lg border"
+                                    style={{
+                                        backgroundColor:
+                                            selectedEnvInfo.color || '',
+                                        borderColor:
+                                            selectedEnvInfo.color || '',
+                                        color: textColor,
+                                    }}
+                                >
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Server
+                                            className="h-4 w-4 shrink-0"
+                                            style={{ color: textColor }}
+                                        />
+                                        <span
+                                            className="text-sm font-medium"
+                                            style={{ color: textColor }}
+                                        >
+                                            {(
+                                                selectedEnvInfo.baseUrl ||
+                                                selectedEnvInfo.host
+                                            )
+                                                .replace('http://', '')
+                                                .replace('https://', '')}
+                                        </span>
+                                    </div>
+                                    <div
+                                        className="font-semibold truncate"
+                                        style={{ color: textColor }}
+                                    >
+                                        {selectedEnvInfo.type}
+                                    </div>
+                                    <div
+                                        className="text-xs flex items-center gap-1"
+                                        style={{ color: textColor }}
+                                    >
+                                        <div className="w-2 h-2 bg-green-500 rounded-full shrink-0"></div>
+                                        Connected
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
                     {/* Auto Sync Toggle */}
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                         <div className="flex items-center justify-between">
@@ -295,20 +382,28 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                             className="flex-1 text-xs bg-transparent"
                         >
                             <Download className="h-3 w-3 mr-1 shrink-0" />
-                            Export
+                            Import / Export
                         </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                onExportImport?.('import');
-                            }}
-                            className="flex-1 text-xs bg-transparent"
-                        >
-                            <Upload className="h-3 w-3 mr-1 shrink-0" />
-                            Import
-                        </Button>
+
+                        {selectedEnvInfo && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                    e.preventDefault();
+
+                                    localStorage.removeItem(
+                                        StorageKeys.SELECTED_ENVIRONMENT_INFO,
+                                    );
+
+                                    navigate({ to: '/environments' });
+                                }}
+                                className="flex-1 text-xs bg-transparent"
+                            >
+                                <TimerReset className="h-3 w-3 mr-1 shrink-0" />
+                                Disconnect
+                            </Button>
+                        )}
                     </div>
                 </div>
             )}

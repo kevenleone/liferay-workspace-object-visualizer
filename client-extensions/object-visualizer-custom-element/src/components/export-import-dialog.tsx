@@ -50,12 +50,20 @@ export function ExportImportDialog({
     const [activeTab, setActiveTab] = useState<'export' | 'import'>(initialTab);
 
     const groupedByFolder = useMemo(() => {
-        return Object.groupBy(objectDefinitions, (def) =>
-            String(def.objectFolderExternalReferenceCode || ''),
+        return (objectDefinitions || []).reduce(
+            (acc, def) => {
+                const key = String(def.objectFolderExternalReferenceCode || '');
+                if (!acc[key]) {
+                    acc[key] = [];
+                }
+                acc[key].push(def);
+                return acc;
+            },
+            {} as Record<string, typeof objectDefinitions>,
         );
     }, [objectDefinitions]);
     const sortedObjects = useMemo(() => {
-        return [...objectDefinitions].sort((a, b) => {
+        return [...(objectDefinitions ?? [])].sort((a, b) => {
             const la = getLocalizedField(a.label) || a.name || '';
             const lb = getLocalizedField(b.label) || b.name || '';
             return la.localeCompare(lb);
