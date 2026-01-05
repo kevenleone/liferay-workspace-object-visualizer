@@ -1,14 +1,21 @@
 use axum::{
-    body::Body,
-    extract::{Query, State},
+    body::{Body, Bytes},
+    extract::{Path, State},
     http::{HeaderMap, Method, StatusCode},
     response::{IntoResponse, Response},
-    routing::{any, post},
+    routing::{get, post},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fs::{self, File};
+use std::io::Read;
+use std::time::{Duration, Instant};
 use std::sync::{Arc, Mutex};
 use tower_http::cors::CorsLayer;
+use base64::{engine::general_purpose, Engine as _};
+
+const DB_FILE: &str = "applications.json";
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Application {
@@ -18,26 +25,51 @@ pub struct Application {
     pub extra: serde_json::Value,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct Database {
+    environments: Vec<Application>,
+}
+
 #[derive(Clone)]
 pub struct AppState {
     pub applications: Arc<Mutex<Vec<Application>>>,
     pub client: reqwest::Client,
+    pub token_cache: Arc<Mutex<HashMap<String, OAuthToken>>>,
 }
 
-#[derive(Deserialize)]
-struct ProxyParams {
-    url: String,
+#[derive(Clone)]
+struct OAuthToken {
+    authorization: String,
+    expires_at: Instant,
 }
 
 pub async fn start_server() {
+    let applications = load_applications();
     let state = AppState {
-        applications: Arc::new(Mutex::new(Vec::new())),
+        applications: Arc::new(Mutex::new(applications)),
         client: reqwest::Client::new(),
+        token_cache: Arc::new(Mutex::new(HashMap::new())),
     };
 
     let app = Router::new()
-        .route("/applications", post(add_application).get(get_applications))
-        .route("/proxy", any(proxy_handler))
+        .route(
+            "/applications",
+            post(add_application).get(get_applications).put(update_application),
+        )
+        .route("/applications/:id", get(get_application))
+        .route(
+            "/proxy/*path",
+            get(
+                |State(state), Path(path), headers: HeaderMap| async move {
+                    forward(state, path, Method::GET, headers, Bytes::new()).await
+                },
+            )
+            .post(
+                |State(state), Path(path), headers: HeaderMap, body: Bytes| async move {
+                    forward(state, path, Method::POST, headers, body).await
+                },
+            ),
+        )
         .layer(CorsLayer::permissive())
         .with_state(state);
 
@@ -48,11 +80,34 @@ pub async fn start_server() {
     axum::serve(listener, app).await.unwrap();
 }
 
+fn load_applications() -> Vec<Application> {
+    if let Ok(mut file) = File::open(DB_FILE) {
+        let mut content = String::new();
+        if file.read_to_string(&mut content).is_ok() {
+            if let Ok(db) = serde_json::from_str::<Database>(&content) {
+                return db.environments;
+            }
+        }
+    }
+    Vec::new()
+}
+
+fn save_applications(applications: &[Application]) {
+    let db = Database {
+        environments: applications.to_vec(),
+    };
+    if let Ok(json) = serde_json::to_string_pretty(&db) {
+        let _ = fs::write(DB_FILE, json);
+    }
+}
+
 async fn add_application(
     State(state): State<AppState>,
     Json(payload): Json<Application>,
 ) -> impl IntoResponse {
-    state.applications.lock().unwrap().push(payload);
+    let mut apps = state.applications.lock().unwrap();
+    apps.push(payload);
+    save_applications(&apps);
     StatusCode::CREATED
 }
 
@@ -61,29 +116,198 @@ async fn get_applications(State(state): State<AppState>) -> Json<Vec<Application
     Json(apps)
 }
 
-async fn proxy_handler(
+async fn get_application(
     State(state): State<AppState>,
-    Query(params): Query<ProxyParams>,
+    Path(id): Path<String>,
+) -> Result<Json<Application>, StatusCode> {
+    let apps = state.applications.lock().unwrap();
+    if let Some(app) = apps.iter().find(|app| app.id.as_deref() == Some(&id)) {
+        Ok(Json(app.clone()))
+    } else {
+        Err(StatusCode::NOT_FOUND)
+    }
+}
+
+async fn update_application(
+    State(state): State<AppState>,
+    Json(payload): Json<Application>,
+) -> Result<Json<Application>, StatusCode> {
+    let mut apps = state.applications.lock().unwrap();
+    if let Some(index) = apps
+        .iter()
+        .position(|app| app.id == payload.id && app.id.is_some())
+    {
+        apps[index] = payload.clone();
+        save_applications(&apps);
+        Ok(Json(payload))
+    } else {
+        Err(StatusCode::NOT_FOUND)
+    }
+}
+
+async fn forward(
+    state: AppState,
+    path: String,
     method: Method,
     headers: HeaderMap,
-    body: Body,
+    body: Bytes,
 ) -> Result<Response, StatusCode> {
-    let url = params.url;
-    
-    let body_bytes = axum::body::to_bytes(body, usize::MAX).await.map_err(|_| StatusCode::BAD_REQUEST)?;
+    let target_id = headers
+        .get("x-target-id")
+        .and_then(|h| h.to_str().ok())
+        .ok_or(StatusCode::BAD_REQUEST)?;
 
-    let mut req_builder = state.client.request(method, &url);
-    
-    for (key, value) in headers {
-         if let Some(key) = key {
-             if key.as_str().eq_ignore_ascii_case("host") {
-                 continue;
-             }
-             req_builder = req_builder.header(key, value);
-         }
+    let application = {
+        let apps = state.applications.lock().unwrap();
+        apps.iter()
+            .find(|app| app.id.as_deref() == Some(target_id))
+            .cloned()
+    }
+    .ok_or(StatusCode::NOT_FOUND)?;
+
+    println!("{:#?}", application);
+    println!("Printing metadata");
+    println!("{:#?}", path);
+    println!("{:#?}", method);
+
+    if method == Method::POST {
+        println!("{:#?}", body);
     }
 
-    req_builder = req_builder.body(body_bytes);
+    let protocol = application
+        .extra
+        .get("protocol")
+        .and_then(|v| v.as_str())
+        .unwrap_or("http");
+    let host = application
+        .extra
+        .get("host")
+        .and_then(|v| v.as_str())
+        .ok_or(StatusCode::BAD_REQUEST)?;
+    let port = application
+        .extra
+        .get("port")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let base = if port.is_empty() {
+        format!("{}://{}", protocol, host)
+    } else {
+        format!("{}://{}:{}", protocol, host, port)
+    };
+
+    let base = base.trim_end_matches('/');
+    let url = format!("{}/{}", base, path);
+    
+    let mut req_builder = state.client.request(method, &url);
+    
+    for (key, value) in headers.iter() {
+        if key.as_str().eq_ignore_ascii_case("host")
+            || key.as_str().eq_ignore_ascii_case("x-target-id")
+            || key.as_str().eq_ignore_ascii_case("x-target-url")
+            || key.as_str().eq_ignore_ascii_case("authorization")
+        {
+            continue;
+        }
+        req_builder = req_builder.header(key, value);
+    }
+
+    let auth_type = application
+        .extra
+        .get("authType")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    if auth_type.eq_ignore_ascii_case("basic") {
+        let username = application
+            .extra
+            .get("username")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let password = application
+            .extra
+            .get("password")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        if !username.is_empty() || !password.is_empty() {
+            let creds = format!("{}:{}", username, password);
+            let encoded = general_purpose::STANDARD.encode(creds.as_bytes());
+            req_builder = req_builder.header("Authorization", format!("Basic {}", encoded));
+        }
+    } else if auth_type.eq_ignore_ascii_case("bearer") {
+        if let Some(token) = application.extra.get("token").and_then(|v| v.as_str()) {
+            if !token.is_empty() {
+                req_builder = req_builder.header("Authorization", format!("Bearer {}", token));
+            }
+        }
+    } else if auth_type.eq_ignore_ascii_case("oauth") || auth_type.eq_ignore_ascii_case("oauth2") {
+        let client_id = application
+            .extra
+            .get("clientId")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let client_secret = application
+            .extra
+            .get("clientSecret")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let token_url = application
+            .extra
+            .get("tokenUrl")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        if !client_id.is_empty() && !client_secret.is_empty() && !token_url.is_empty() {
+            let cached = {
+                let cache = state.token_cache.lock().unwrap();
+                cache.get(target_id).cloned()
+            };
+            let now = Instant::now();
+            let mut authorization: Option<String> = None;
+            if let Some(token) = cached {
+                if now < token.expires_at {
+                    authorization = Some(token.authorization);
+                }
+            }
+            if authorization.is_none() {
+                println!("{} Authorization is blank, requesting for new authorization token {}: ", path, client_id);
+
+                let params = [("client_id", client_id), ("client_secret", client_secret), ("grant_type", "client_credentials")];
+                let res = state
+                    .client
+                    .post(token_url)
+                    .form(&params)
+                    .send()
+                    .await
+                    .map_err(|_| StatusCode::BAD_GATEWAY)?;
+                #[derive(Deserialize)]
+                struct OAuthResponse {
+                    access_token: String,
+                    token_type: String,
+                    expires_in: u64,
+                }
+                let data: OAuthResponse = res.json().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
+
+                println!("{} Exchanged authorization for {}: ", path, client_id);
+
+                let auth_value = format!("{} {}", data.token_type, data.access_token);
+                let expires_at = Instant::now() + Duration::from_millis(data.expires_in.saturating_mul(1000).saturating_sub(15000));
+                {
+                    let mut cache = state.token_cache.lock().unwrap();
+                    cache.insert(
+                        target_id.to_string(),
+                        OAuthToken {
+                            authorization: auth_value.clone(),
+                            expires_at,
+                        },
+                    );
+                }
+                authorization = Some(auth_value);
+            }
+            if let Some(auth) = authorization {
+                req_builder = req_builder.header("Authorization", auth);
+            }
+        }
+    }
+
+    req_builder = req_builder.body(body);
 
     match req_builder.send().await {
         Ok(res) => {
