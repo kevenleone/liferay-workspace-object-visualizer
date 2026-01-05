@@ -52,8 +52,9 @@ import {
 type Props = {
     data: any[];
     entriesPage: {
-        pageSize: number;
+        items: any[];
         page: number;
+        pageSize: number;
         totalCount: number;
     };
     objectDefinition: ObjectDefinition;
@@ -61,7 +62,7 @@ type Props = {
 
 export default function JsonToCsvConverter({
     data,
-    entriesPage,
+    entriesPage = {},
     objectDefinition,
 }: Props) {
     const [csvOutput, setCsvOutput] = useState('');
@@ -71,6 +72,13 @@ export default function JsonToCsvConverter({
     const [selectedJsonData, setSelectedJsonData] = useState<any>(null);
     const { invalidate } = useRouter();
     const location = useLocation();
+
+    useEffect(() => {
+        // small hack to unblock the page click after the modal is closed
+        // caused by the dropdown item onClick not removing the pointer.
+
+        document.body.style.removeProperty('pointer-events');
+    }, [isJsonModalOpen]);
 
     // Detect which route we're on
     const isQueryRoute = location.pathname.includes('/query');
@@ -92,7 +100,7 @@ export default function JsonToCsvConverter({
 
     const totalPages = Math.max(
         1,
-        Math.ceil(entriesPage.totalCount / pageSize)
+        Math.ceil(entriesPage.totalCount / pageSize),
     );
 
     const handlePageChange = (page: number) => {
@@ -130,7 +138,7 @@ export default function JsonToCsvConverter({
                 // invalidate only the object definition page results
 
                 return route.id.includes(
-                    `externalReferenceCode/p/${objectDefinition.externalReferenceCode}`
+                    `externalReferenceCode/p/${objectDefinition.externalReferenceCode}`,
                 );
             },
         });
@@ -153,7 +161,7 @@ export default function JsonToCsvConverter({
                     dataArray = [jsonData];
                 } else {
                     throw new Error(
-                        'Invalid JSON structure. Please provide an array of objects or a single object.'
+                        'Invalid JSON structure. Please provide an array of objects or a single object.',
                     );
                 }
 
@@ -192,7 +200,7 @@ export default function JsonToCsvConverter({
                     } catch (error) {
                         console.error(
                             'Error parsing column visibility:',
-                            error
+                            error,
                         );
                         // Initialize all columns as visible
                         const initialVisibility: Record<string, boolean> = {};
@@ -237,7 +245,7 @@ export default function JsonToCsvConverter({
                 setRows([]);
             }
         },
-        [externalReferenceCode]
+        [externalReferenceCode],
     );
 
     useEffect(() => {
@@ -270,12 +278,12 @@ export default function JsonToCsvConverter({
     };
 
     const visibleHeaders = headers.filter(
-        (header) => columnVisibility[header] !== false
+        (header) => columnVisibility[header] !== false,
     );
 
     // Calculate how many columns are hidden
     const hiddenColumnsCount = headers.filter(
-        (header) => columnVisibility[header] === false
+        (header) => columnVisibility[header] === false,
     ).length;
 
     // Check if any columns have been hidden (changed from default)
@@ -302,7 +310,7 @@ export default function JsonToCsvConverter({
                         <div>
                             <CardTitle>
                                 {`${getLocalizedField(
-                                    objectDefinition.label
+                                    objectDefinition.label,
                                 )} (${entriesPage?.totalCount ?? 0})`}
                             </CardTitle>
 
@@ -398,12 +406,12 @@ export default function JsonToCsvConverter({
                                                     ({ header }) =>
                                                         columnVisibility[
                                                             header
-                                                        ] !== false
+                                                        ] !== false,
                                                 )
                                                 .map(
                                                     (
                                                         { cell },
-                                                        filteredIndex
+                                                        filteredIndex,
                                                     ) => {
                                                         const cellType =
                                                             typeof cell;
@@ -414,7 +422,7 @@ export default function JsonToCsvConverter({
 
                                                         if (
                                                             React.isValidElement(
-                                                                cell
+                                                                cell,
                                                             )
                                                         ) {
                                                             return (
@@ -440,10 +448,16 @@ export default function JsonToCsvConverter({
                                                                         size="sm"
                                                                         onClick={() => {
                                                                             setSelectedJsonData(
-                                                                                cell
+                                                                                {
+                                                                                    cell,
+                                                                                    title: visibleHeaders[
+                                                                                        filteredIndex
+                                                                                    ],
+                                                                                },
                                                                             );
+
                                                                             setIsJsonModalOpen(
-                                                                                true
+                                                                                true,
                                                                             );
                                                                         }}
                                                                         className="gap-2"
@@ -469,7 +483,7 @@ export default function JsonToCsvConverter({
                                                                     }
                                                                 >
                                                                     {JSON.stringify(
-                                                                        cell
+                                                                        cell,
                                                                     )}
                                                                 </Badge>
                                                             );
@@ -483,7 +497,7 @@ export default function JsonToCsvConverter({
                                                                 {value}
                                                             </TableCell>
                                                         );
-                                                    }
+                                                    },
                                                 )}
 
                                             <TableCell className="sticky right-0 bg-background">
@@ -499,8 +513,25 @@ export default function JsonToCsvConverter({
                                                             <MoreHorizontal className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
+
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onClick={() => {
+                                                                setSelectedJsonData(
+                                                                    {
+                                                                        cell: entriesPage
+                                                                            .items[
+                                                                            rowIndex
+                                                                        ],
+                                                                        title: 'View Row',
+                                                                    },
+                                                                );
+
+                                                                setIsJsonModalOpen(
+                                                                    true,
+                                                                );
+                                                            }}
+                                                        >
                                                             <Eye className="h-4 w-4 mr-2" />
                                                             View
                                                         </DropdownMenuItem>
@@ -516,7 +547,7 @@ export default function JsonToCsvConverter({
                                                             className="text-destructive"
                                                             onClick={() =>
                                                                 onDeleteEntry(
-                                                                    row
+                                                                    row,
                                                                 )
                                                             }
                                                         >
@@ -563,14 +594,16 @@ export default function JsonToCsvConverter({
             </Card>
 
             <Dialog open={isJsonModalOpen} onOpenChange={setIsJsonModalOpen}>
-                <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+                <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
                     <DialogHeader>
-                        <DialogTitle>JSON Viewer</DialogTitle>
+                        <DialogTitle>
+                            JSON Viewer ({selectedJsonData?.title})
+                        </DialogTitle>
                     </DialogHeader>
                     <div className="flex-1 overflow-hidden min-h-0">
                         {selectedJsonData && (
                             <JsonViewer
-                                data={selectedJsonData}
+                                data={selectedJsonData?.cell}
                                 defaultExpanded={true}
                                 maxDepth={10}
                                 className="h-full"

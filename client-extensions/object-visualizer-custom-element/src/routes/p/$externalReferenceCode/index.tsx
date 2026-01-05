@@ -114,7 +114,10 @@ function RouteComponent() {
             return [];
         }
 
-        const objectFields = objectDefinition.objectFields as ObjectField[];
+        const objectFields = [
+            ...(objectDefinition.objectFields as ObjectField[]),
+            ...(objectDefinition.objectRelationships as ObjectField[]),
+        ];
 
         // Field transformation map for special field handling
         const fieldTransformers: Record<

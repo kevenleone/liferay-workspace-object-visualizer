@@ -164,7 +164,7 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
             {!collapsed && (
                 <div className="p-4 border-b border-gray-200 shrink-0">
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Search className="absolute left-3 top-[10px] transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
                             placeholder="Search objects..."
                             value={searchQuery}
@@ -323,22 +323,27 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                                             className="text-sm font-medium"
                                             style={{ color: textColor }}
                                         >
-                                            {(
-                                                selectedEnvInfo.baseUrl ||
-                                                selectedEnvInfo.host
-                                            )
-                                                .replace('http://', '')
-                                                .replace('https://', '')}
+                                            {selectedEnvInfo.name}
                                         </span>
                                     </div>
                                     <div
-                                        className="font-semibold truncate"
+                                        className="font-semibold text-xs truncate"
                                         style={{ color: textColor }}
                                     >
-                                        {selectedEnvInfo.type}
+                                        {(
+                                            selectedEnvInfo.baseUrl ||
+                                            selectedEnvInfo.host
+                                        )
+                                            .replace('http://', '')
+                                            .replace('https://', '')}
+
+                                        <small className="ml-1">
+                                            ({selectedEnvInfo.type})
+                                        </small>
                                     </div>
+
                                     <div
-                                        className="text-xs flex items-center gap-1"
+                                        className="text-xs flex items-center gap-1 mt-2"
                                         style={{ color: textColor }}
                                     >
                                         <div className="w-2 h-2 bg-green-500 rounded-full shrink-0"></div>
