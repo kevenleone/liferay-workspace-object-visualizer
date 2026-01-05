@@ -1,6 +1,6 @@
 use axum::{
     body::{Body, Bytes},
-    extract::{Path, State},
+    extract::{OriginalUri, Path, State},
     http::{HeaderMap, Method, StatusCode},
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -60,13 +60,15 @@ pub async fn start_server() {
         .route(
             "/proxy/*path",
             get(
-                |State(state), Path(path), headers: HeaderMap| async move {
-                    forward(state, path, Method::GET, headers, Bytes::new()).await
+                |State(state), Path(path), OriginalUri(original_uri), headers: HeaderMap| async move {
+                    let query = original_uri.query().map(|s| s.to_string());
+                    forward(state, path, Method::GET, headers, Bytes::new(), query).await
                 },
             )
             .post(
-                |State(state), Path(path), headers: HeaderMap, body: Bytes| async move {
-                    forward(state, path, Method::POST, headers, body).await
+                |State(state), Path(path), OriginalUri(original_uri), headers: HeaderMap, body: Bytes| async move {
+                    let query = original_uri.query().map(|s| s.to_string());
+                    forward(state, path, Method::POST, headers, body, query).await
                 },
             ),
         )
@@ -151,6 +153,7 @@ async fn forward(
     method: Method,
     headers: HeaderMap,
     body: Bytes,
+    query: Option<String>,
 ) -> Result<Response, StatusCode> {
     let target_id = headers
         .get("x-target-id")
@@ -196,7 +199,11 @@ async fn forward(
     };
 
     let base = base.trim_end_matches('/');
-    let url = format!("{}/{}", base, path);
+    let url = if let Some(q) = query {
+        format!("{}/{}?{}", base, path, q)
+    } else {
+        format!("{}/{}", base, path)
+    };
     
     let mut req_builder = state.client.request(method, &url);
     
