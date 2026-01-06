@@ -2,7 +2,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
 
 import tailwindStyleSheet from './core/tailwind-ui.ts';
-import { router } from './core/tanstack-router.ts';
+import { router } from './core/tanstack-router.tsx';
 
 class ShadcnCustomElement extends HTMLElement {
     private root: Root | undefined;

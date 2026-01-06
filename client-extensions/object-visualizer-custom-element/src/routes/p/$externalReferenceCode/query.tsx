@@ -14,6 +14,7 @@ import {
     ObjectField,
 } from 'liferay-headless-rest-client/object-admin-v1.0';
 import { useMemo, useState, useEffect, useRef } from 'react';
+import { liferayClient } from '@/lib/headless-client';
 
 export const Route = createFileRoute('/p/$externalReferenceCode/query')({
     component: RouteComponent,
@@ -74,8 +75,9 @@ export const Route = createFileRoute('/p/$externalReferenceCode/query')({
                 url.searchParams.set('pageSize', String(pageSize));
             }
 
-            const response = await Liferay.Util.fetch(url.toString());
-            const data = await response.json();
+            const { data } = await liferayClient.get({
+                url: url.pathname + url.search,
+            });
 
             return data;
         } catch (error) {
