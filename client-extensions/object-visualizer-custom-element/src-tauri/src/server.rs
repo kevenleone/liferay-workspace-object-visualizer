@@ -10,12 +10,18 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::Read;
+use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use std::sync::{Arc, Mutex};
 use tower_http::cors::CorsLayer;
 use base64::{engine::general_purpose, Engine as _};
 
-const DB_FILE: &str = "applications.json";
+fn get_db_path() -> PathBuf {
+    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let dir = PathBuf::from(home).join(".object-visualizer");
+    
+    dir.join("applications.json")
+}
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Application {
@@ -83,7 +89,8 @@ pub async fn start_server() {
 }
 
 fn load_applications() -> Vec<Application> {
-    if let Ok(mut file) = File::open(DB_FILE) {
+    let db_path = get_db_path();
+    if let Ok(mut file) = File::open(db_path) {
         let mut content = String::new();
         if file.read_to_string(&mut content).is_ok() {
             if let Ok(db) = serde_json::from_str::<Database>(&content) {
@@ -99,7 +106,11 @@ fn save_applications(applications: &[Application]) {
         environments: applications.to_vec(),
     };
     if let Ok(json) = serde_json::to_string_pretty(&db) {
-        let _ = fs::write(DB_FILE, json);
+        let db_path = get_db_path();
+        if let Some(parent) = db_path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        let _ = fs::write(db_path, json);
     }
 }
 

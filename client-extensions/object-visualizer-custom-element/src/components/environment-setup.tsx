@@ -105,7 +105,7 @@ export function EnvironmentSetup({
         const protocol = formData.protocol || 'http';
         const host = formData.host || 'localhost';
         const port = formData.port ? `:${formData.port}` : '';
-        const tokenUrl = `${protocol}://${host}${port}/o/oauth/token`;
+        const tokenUrl = `${protocol}://${host}${port}/o/oauth2/token`;
 
         setFormData((prev) => {
             if (prev.tokenUrl === tokenUrl) return prev;
