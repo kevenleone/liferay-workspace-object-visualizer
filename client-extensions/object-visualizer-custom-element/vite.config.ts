@@ -5,7 +5,6 @@ import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 const host = process.env.TAURI_DEV_HOST;
-const tauriBuild = process.env.TAURI_BUILD;
 
 const devPort = 5173;
 
@@ -30,10 +29,12 @@ export default defineConfig({
         sourcemap: !!process.env.TAURI_ENV_DEBUG,
     },
     clearScreen: false,
-    envPrefix: ['VITE_', 'TAURI_ENV_*'],
+    envPrefix: ['VITE_', 'TAURI_ENV_'],
     experimental: {
         renderBuiltUrl(filename: string) {
-            return tauriBuild
+            // If there is a proxy URL this means that is running outside of Liferay
+
+            return process.env.TAURI_ENV_PROXY_BASE_URL
                 ? filename
                 : `/o/object-visualizer-custom-element/${filename}`;
         },

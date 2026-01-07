@@ -1,13 +1,13 @@
 {
     "$schema": "https://schema.tauri.app/config/2",
-    "productName": "object-visualizer",
+    "productName": "Object Visualizer",
     "version": "0.1.0",
     "identifier": "com.object.visualizer",
     "build": {
-        "frontendDist": "../build/vite",
+        "beforeDevCommand": "TAURI_ENV_PROXY_BASE_URL=http://localhost:3001 bun run dev",
+        "beforeBuildCommand": "TAURI_ENV_PROXY_BASE_URL=http://localhost:3001 bun run build",
         "devUrl": "http://localhost:5173",
-        "beforeDevCommand": "bun run dev",
-        "beforeBuildCommand": "TAURI_BUILD=true bun run build"
+        "frontendDist": "../build/vite"
     },
     "app": {
         "windows": [

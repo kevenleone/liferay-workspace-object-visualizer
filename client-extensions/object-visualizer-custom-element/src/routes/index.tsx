@@ -4,10 +4,8 @@ export const Route = createFileRoute('/')({
     component: RouteComponent,
 });
 
-const showEnvironments = true;
-
 function RouteComponent() {
-    if (showEnvironments) {
+    if (import.meta.env.TAURI_ENV_PROXY_BASE_URL) {
         return <Navigate to="/environments" />;
     }
 

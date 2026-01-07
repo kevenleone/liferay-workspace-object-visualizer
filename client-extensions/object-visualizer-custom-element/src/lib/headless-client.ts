@@ -3,6 +3,8 @@ import { createClient } from 'liferay-headless-rest-client';
 import { Liferay } from './liferay';
 import { StorageKeys } from '@/utils/storage';
 
+const tauriProxyBaseURL = import.meta.env.TAURI_ENV_PROXY_BASE_URL;
+
 const { liferayInstance = true } = Liferay;
 
 export function getClientOptions() {
@@ -24,7 +26,7 @@ export function getClientOptions() {
             applicationId = id;
         }
 
-        clientOptions.baseUrl = 'http://localhost:3001/proxy';
+        clientOptions.baseUrl = `${tauriProxyBaseURL}/proxy`;
         clientOptions.headers = {
             'x-target-id': applicationId,
         };

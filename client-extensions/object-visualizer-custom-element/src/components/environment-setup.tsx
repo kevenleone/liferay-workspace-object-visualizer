@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { Plus, Eye, EyeOff, Check, Settings } from 'lucide-react';
 import { StorageKeys } from '@/utils/storage';
 import { getClientOptions, liferayClient } from '@/lib/headless-client';
+import { tauriFetch } from '@/lib/tauri-client';
 
 interface Environment {
     id: string;
@@ -66,6 +67,7 @@ export function EnvironmentSetup({
     onEnvironmentSelect,
 }: EnvironmentSetupProps) {
     const navigate = useNavigate();
+    const { invalidate } = useRouter();
     const [savedEnvironments, setSavedEnvironments] = useState<Environment[]>(
         [],
     );
@@ -89,7 +91,7 @@ export function EnvironmentSetup({
     });
 
     useEffect(() => {
-        fetch('http://localhost:3001/applications')
+        tauriFetch('/applications')
             .then((res) => res.json())
             .then((data: any[]) => {
                 const mapped = data.map((d) => ({
@@ -125,7 +127,7 @@ export function EnvironmentSetup({
 
         try {
             if (editingId) {
-                await fetch(`http://localhost:3001/applications`, {
+                await tauriFetch(`/applications`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newEnv),
@@ -135,7 +137,7 @@ export function EnvironmentSetup({
                     prev.map((env) => (env.id === editingId ? newEnv : env)),
                 );
             } else {
-                await fetch('http://localhost:3001/applications', {
+                await tauriFetch('/applications', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newEnv),
@@ -210,6 +212,8 @@ export function EnvironmentSetup({
                 );
 
                 liferayClient.setConfig(getClientOptions());
+
+                invalidate();
             }
         } catch {
             void 0;
