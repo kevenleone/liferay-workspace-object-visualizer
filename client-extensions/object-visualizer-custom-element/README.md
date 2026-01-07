@@ -1,50 +1,98 @@
-# React + TypeScript + Vite
+# Object Visualizer Custom Element
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + TypeScript custom element for browsing and querying Liferay Objects. It runs in the browser, renders inside a Shadow DOM, and interoperates with a local Tauri server that proxies requests to Liferay with support for Basic, Bearer, and OAuth2 client-credentials.
 
-Currently, two official plugins are available:
+## Overview
+- Custom element: `object-visualizer-custom-element`, defined in `src/main.tsx`
+- UI/Router: React with TanStack Router (hash history)
+- Styling: Tailwind CSS (adopted stylesheet into Shadow DOM)
+- Icons/Components: lucide-react, shadcn-inspired UI
+- Data: liferay-headless-rest-client configured to use either Liferay’s own fetch or the local Tauri proxy
+- Proxy: local Tauri server at `127.0.0.1:3001` with global environment persistence
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Architecture
+- Shadow DOM app bootstrapped in `src/main.tsx`
+- Router config in `src/core/tanstack-router.tsx`
+  - Default pending overlay (`defaultPendingComponent`) for route transitions
+- Feature routes under `src/routes`
+  - `/environments`: setup and selection of remote targets
+  - `/p`: object browsing, schema, and query
+  - Nested routes load data via TanStack Router loaders
+- Tauri backend (`src-tauri/src/server.rs`)
+  - Stores environments in `~/.object-visualizer/applications.json`
+  - Proxies requests under `/proxy/*` and forwards query params
+  - Authorization: Basic, Bearer, OAuth2 (client credentials with token caching)
 
-## Expanding the ESLint configuration
+## Tooling
+- Build/dev: Vite with React SWC
+- Router plugin: `@tanstack/router-plugin/vite` for file-based routes
+- Lint: ESLint
+- Desktop packaging: Tauri CLI and config in `src-tauri/tauri.conf.json`
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Commands
+From this directory:
+- `npm run dev`: start the Vite dev server (web)
+- `npm run build`: build the web bundle
+- `npm run preview`: preview the built bundle
+- `npm run lint`: run ESLint
+- `npm run tauri`: run Tauri CLI (dev/build flows controlled by `tauri.conf.json`)
+- `npm run tauri:build`: build desktop app (invokes Vite build via Tauri hooks)
 
-- Configure the top-level `parserOptions` property like this:
+## Configuration
+- Env prefix: `VITE_` and `TAURI_ENV_*` are exposed to the client via Vite
+- Proxy base URL:
+  - `TAURI_ENV_PROXY_BASE_URL` controls the base URL used by our Tauri client helpers
+  - Defaults to `http://localhost:3001` if unset
+  - Example:
+    - macOS/zsh: `TAURI_ENV_PROXY_BASE_URL=http://localhost:3001 npm run dev`
+    - Windows PowerShell: `$env:TAURI_ENV_PROXY_BASE_URL='http://localhost:3001'; npm run dev`
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## Environment Handling
+- Saved environments live in `~/.object-visualizer/applications.json` (created automatically)
+- UI for add/edit/select in `src/components/environment-setup.tsx`
+- On selection:
+  - Environment info written to localStorage under `StorageKeys.SELECTED_ENVIRONMENT_INFO`
+  - `liferayClient.setConfig(getClientOptions())` updates headers (including `x-target-id`)
+  - `router.invalidate()` forces route loaders to re-run immediately with the updated configuration
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Data Client
+- `src/lib/headless-client.ts`
+  - If inside Liferay: uses `Liferay.Util.fetch` with baseUrl `/`
+  - If external: uses proxy base URL `${TAURI_ENV_PROXY_BASE_URL}/proxy` and sets `x-target-id`
+- `src/lib/tauri-client.ts`
+  - Helpers: `tauriUrl`, `tauriFetch`, `tauriJson`
+  - Centralizes usage of `TAURI_ENV_PROXY_BASE_URL`
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+## Proxy Server (Tauri)
+- Listens on `127.0.0.1:3001`
+- Routes:
+  - `POST /applications` to add environment
+  - `PUT /applications` to update environment
+  - `GET /applications` to list environments
+  - `GET|POST /proxy/*path` forwards to target host, preserves query string
+- Auth:
+  - `basic`: encodes `username:password`
+  - `bearer`: uses provided token
+  - `oauth`/`oauth2`: exchanges client credentials at `tokenUrl`, caches token until expiry
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+## Routing UX
+- Pending overlay for any route loader activity via TanStack Router’s `defaultPendingComponent`
+- Keep the UI responsive during data fetching and transitions
+
+## Development Tips
+- Ensure `TAURI_ENV_PROXY_BASE_URL` matches where the Tauri server runs
+- Select an environment in `/environments` before browsing objects
+- If loaders appear stale, `router.invalidate()` is already wired to run on environment selection
+
+## Linting
+- `npm run lint`
+- Some warnings about “only-export-components” are informational and do not block dev
+
+## Packaging
+- Desktop builds via `npm run tauri:build`
+- Vite outputs are configured for Tauri in `vite.config.ts` (build paths, assets)
+
+## Troubleshooting
+- Proxy not reachable: confirm server logs show “Server listening on 127.0.0.1:3001”
+- OAuth2 failures: verify `clientId`, `clientSecret`, and `tokenUrl` in the environment config
+- Missing data: reselect environment or check that `x-target-id` is set in client config
