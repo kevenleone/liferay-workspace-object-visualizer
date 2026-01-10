@@ -13,7 +13,6 @@ import {
     Play,
 } from 'lucide-react';
 import { liferayClient } from '@/lib/headless-client';
-import { JsonViewer } from '@/components/ui/json-viewer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -329,14 +328,13 @@ function GraphQLPage() {
                                 </Button>
                             )}
                         </div>
-                        <div className="flex-1 bg-gray-50 overflow-hidden relative">
+                        <div className="flex-1 bg-gray-50 p-4 font-mono text-xs overflow-auto text-gray-800">
                             {rawResponse ? (
-                                <JsonViewer
-                                    data={rawResponse}
-                                    className="h-full border-0 rounded-none bg-transparent"
-                                />
+                                <pre className="whitespace-pre-wrap break-all">
+                                    {JSON.stringify(rawResponse, null, 2)}
+                                </pre>
                             ) : (
-                                <div className="p-4 text-gray-400 italic">
+                                <div className="text-gray-400 italic">
                                     Execute a query to see the response here...
                                 </div>
                             )}

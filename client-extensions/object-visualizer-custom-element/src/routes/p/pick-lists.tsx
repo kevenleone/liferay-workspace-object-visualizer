@@ -82,6 +82,7 @@ function PickListsPage() {
                     Manage your pick lists and list type entries.
                 </p>
             </div>
+
             <GenericDataTable
                 title="Pick Lists"
                 data={PICK_LISTS_DATA}
@@ -105,8 +106,8 @@ function PickListsPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Key</TableHead>
                                     <TableHead>Name</TableHead>
+                                    <TableHead>Key</TableHead>
                                     <TableHead>ERC</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -116,10 +117,10 @@ function PickListsPage() {
                                         (entry: any) => (
                                             <TableRow key={entry.id}>
                                                 <TableCell className="font-medium">
-                                                    {entry.key}
+                                                    {entry.name}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {entry.name}
+                                                    {entry.key}
                                                 </TableCell>
                                                 <TableCell>
                                                     <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">
