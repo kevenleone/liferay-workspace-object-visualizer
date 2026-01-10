@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import {
-    Play,
     History,
     Save,
     Trash2,
@@ -10,7 +9,11 @@ import {
     XCircle,
     MoreHorizontal,
     Copy,
+    Globe,
+    Play,
 } from 'lucide-react';
+import { liferayClient } from '@/lib/headless-client';
+import { JsonViewer } from '@/components/ui/json-viewer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +40,11 @@ export const Route = createFileRoute('/p/query/graphql')({
 });
 
 function GraphQLPage() {
-    const [url, setUrl] = useState('http://localhost:8080/o/graphql');
+    const envState = useLiveQuery(() =>
+        db.appState.get('selectedEnvironmentInfo'),
+    );
+    const selectedEnvInfo = envState?.value || null;
+
     const [query, setQuery] = useState<string>(`query {
   objectDefinitions(page: 1, pageSize: 10) {
     items {
@@ -47,7 +54,7 @@ function GraphQLPage() {
     }
   }
 }`);
-    const [response, setResponse] = useState<string | null>(null);
+    const [rawResponse, setRawResponse] = useState<any | null>(null);
     const [loading, setLoading] = useState(false);
     const [queryName, setQueryName] = useState('');
     const [showHistory, setShowHistory] = useState(true);
@@ -57,31 +64,26 @@ function GraphQLPage() {
         ) || [];
 
     const executeQuery = async () => {
-        if (!url || !query) return;
+        if (!query) return;
 
         setLoading(true);
         const startTime = performance.now();
-        setResponse(null);
+        setRawResponse(null);
 
         try {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: 'Basic ' + btoa('test@liferay.com:test'),
-                },
-                body: JSON.stringify({ query }),
+            const { data, response: res } = await liferayClient.post({
+                url: '/o/graphql',
+                body: { query },
             });
 
-            const data = await res.json();
             const endTime = performance.now();
             const duration = `${((endTime - startTime) / 1000).toFixed(3)}s`;
 
-            setResponse(JSON.stringify(data, null, 2));
+            setRawResponse(data);
 
             const newItem: GraphqlHistoryItem = {
                 id: Date.now().toString(),
-                url,
+                url: '/o/graphql',
                 query,
                 executedAt: new Date().toISOString(),
                 duration,
@@ -95,11 +97,11 @@ function GraphQLPage() {
             const endTime = performance.now();
             const duration = `${((endTime - startTime) / 1000).toFixed(3)}s`;
 
-            setResponse(JSON.stringify({ error: err.message }, null, 2));
+            setRawResponse({ error: err.message });
 
             const newItem: GraphqlHistoryItem = {
                 id: Date.now().toString(),
-                url,
+                url: '/o/graphql',
                 query,
                 executedAt: new Date().toISOString(),
                 duration,
@@ -115,11 +117,11 @@ function GraphQLPage() {
     };
 
     const saveQuery = async () => {
-        if (!url || !query || !queryName.trim()) return;
+        if (!query || !queryName.trim()) return;
 
         const newItem: GraphqlHistoryItem = {
             id: Date.now().toString(),
-            url,
+            url: '/o/graphql',
             query,
             executedAt: new Date().toISOString(),
             status: 'success',
@@ -131,10 +133,9 @@ function GraphQLPage() {
     };
 
     const loadHistoryItem = (item: GraphqlHistoryItem) => {
-        setUrl(item.url);
         setQuery(item.query);
         if (item.response) {
-            setResponse(JSON.stringify(item.response, null, 2));
+            setRawResponse(item.response);
         }
     };
 
@@ -224,12 +225,13 @@ function GraphQLPage() {
                     >
                         POST
                     </Badge>
-                    <Input
-                        className="font-mono text-sm flex-1 bg-white"
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        placeholder="Enter GraphQL API URL..."
-                    />
+                    <div className="flex-1 flex items-center px-3 h-9 bg-white border rounded-md font-mono text-sm text-gray-400 overflow-hidden">
+                        <Globe className="h-4 w-4 mr-2 shrink-0" />
+                        <span className="truncate">
+                            {selectedEnvInfo?.baseUrl || 'No environment'}
+                            /o/graphql
+                        </span>
+                    </div>
                     <Button
                         variant="secondary"
                         onClick={formatQuery}
@@ -257,7 +259,7 @@ function GraphQLPage() {
                     </Button>
                     <Button
                         onClick={executeQuery}
-                        disabled={loading || !url}
+                        disabled={loading}
                         className="gap-2 bg-pink-600 hover:bg-pink-700 min-w-[100px]"
                     >
                         {loading ? (
@@ -308,24 +310,33 @@ function GraphQLPage() {
                     <div className="w-1/2 flex flex-col bg-white">
                         <div className="border-b p-2 bg-gray-100 text-xs font-semibold text-gray-500 uppercase flex justify-between items-center">
                             <span>Response</span>
-                            {response && (
+                            {rawResponse && (
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     className="h-6 text-xs"
                                     onClick={() => {
-                                        navigator.clipboard.writeText(response);
+                                        navigator.clipboard.writeText(
+                                            JSON.stringify(
+                                                rawResponse,
+                                                null,
+                                                2,
+                                            ),
+                                        );
                                     }}
                                 >
                                     <Copy className="h-3 w-3 mr-1" /> Copy
                                 </Button>
                             )}
                         </div>
-                        <div className="flex-1 bg-gray-50 p-4 font-mono text-sm overflow-auto text-gray-800">
-                            {response ? (
-                                <pre>{response}</pre>
+                        <div className="flex-1 bg-gray-50 overflow-hidden relative">
+                            {rawResponse ? (
+                                <JsonViewer
+                                    data={rawResponse}
+                                    className="h-full border-0 rounded-none bg-transparent"
+                                />
                             ) : (
-                                <div className="text-gray-400 italic">
+                                <div className="p-4 text-gray-400 italic">
                                     Execute a query to see the response here...
                                 </div>
                             )}

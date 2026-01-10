@@ -10,7 +10,12 @@ import {
     XCircle,
     MoreHorizontal,
     Copy,
+    Globe,
+    Code,
 } from 'lucide-react';
+import { liferayClient } from '@/lib/headless-client';
+import { JsonViewer } from '@/components/ui/json-viewer';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -35,11 +40,15 @@ export const Route = createFileRoute('/p/query/rest')({
 });
 
 function RestPage() {
-    const [url, setUrl] = useState(
-        'http://localhost:8080/o/object-admin/v1.0/object-definitions',
+    const envState = useLiveQuery(() =>
+        db.appState.get('selectedEnvironmentInfo'),
     );
-    const [method] = useState('GET');
-    const [response, setResponse] = useState<string | null>(null);
+    const selectedEnvInfo = envState?.value || null;
+
+    const [url, setUrl] = useState('/o/object-admin/v1.0/object-definitions');
+    const [method, setMethod] = useState('GET');
+    const [body, setBody] = useState('');
+    const [rawResponse, setRawResponse] = useState<any | null>(null);
     const [loading, setLoading] = useState(false);
     const [queryName, setQueryName] = useState('');
     const [showHistory, setShowHistory] = useState(true);
@@ -53,22 +62,34 @@ function RestPage() {
 
         setLoading(true);
         const startTime = performance.now();
-        setResponse(null);
+        setRawResponse(null);
 
         try {
-            const res = await fetch(url, {
+            const options: any = {
+                url,
                 method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: 'Basic ' + btoa('test@liferay.com:test'), // Basic auth for local
-                },
-            });
+            };
 
-            const data = await res.json();
+            if (
+                ['POST', 'PUT', 'PATCH'].includes(method) &&
+                body &&
+                body.trim()
+            ) {
+                try {
+                    options.body = JSON.parse(body);
+                } catch (e) {
+                    throw new Error('Invalid JSON body');
+                }
+            }
+
+            const { data, response: res } = await (liferayClient as any)[
+                method.toLowerCase()
+            ](options);
+
             const endTime = performance.now();
             const duration = `${((endTime - startTime) / 1000).toFixed(3)}s`;
 
-            setResponse(JSON.stringify(data, null, 2));
+            setRawResponse(data);
 
             const newItem: RestHistoryItem = {
                 id: Date.now().toString(),
@@ -80,6 +101,7 @@ function RestPage() {
                 statusCode: res.status,
                 responseSize: `${(JSON.stringify(data).length / 1024).toFixed(2)} KB`,
                 response: data,
+                payload: options.body,
             };
 
             await db.restHistory.add(newItem);
@@ -87,7 +109,7 @@ function RestPage() {
             const endTime = performance.now();
             const duration = `${((endTime - startTime) / 1000).toFixed(3)}s`;
 
-            setResponse(JSON.stringify({ error: err.message }, null, 2));
+            setRawResponse({ error: err.message });
 
             const newItem: RestHistoryItem = {
                 id: Date.now().toString(),
@@ -124,8 +146,14 @@ function RestPage() {
 
     const loadHistoryItem = (item: RestHistoryItem) => {
         setUrl(item.url);
+        setMethod(item.method);
+        if (item.payload) {
+            setBody(JSON.stringify(item.payload, null, 2));
+        } else {
+            setBody('');
+        }
         if (item.response) {
-            setResponse(JSON.stringify(item.response, null, 2));
+            setRawResponse(item.response);
         }
     };
 
@@ -178,17 +206,29 @@ function RestPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Badge
-                        variant="outline"
-                        className="bg-blue-100 text-blue-700 border-blue-200 font-mono h-9 px-3 flex items-center text-sm"
-                    >
-                        GET
-                    </Badge>
+                    <Select value={method} onValueChange={setMethod}>
+                        <SelectTrigger className="w-24 bg-white h-9">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="GET">GET</SelectItem>
+                            <SelectItem value="POST">POST</SelectItem>
+                            <SelectItem value="PUT">PUT</SelectItem>
+                            <SelectItem value="PATCH">PATCH</SelectItem>
+                            <SelectItem value="DELETE">DELETE</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <div className="flex-1 flex items-center px-3 h-9 bg-white border rounded-md font-mono text-sm text-gray-400 overflow-hidden">
+                        <Globe className="h-4 w-4 mr-2 shrink-0" />
+                        <span className="truncate">
+                            {selectedEnvInfo?.baseUrl || 'No environment'}
+                        </span>
+                    </div>
                     <Input
-                        className="font-mono text-sm flex-1 bg-white"
+                        className="font-mono text-sm flex-[2] bg-white"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
-                        placeholder="Enter API URL..."
+                        placeholder="Enter API endpoint (e.g. /o/object-admin/v1.0/...)"
                         onKeyDown={(e) => e.key === 'Enter' && executeQuery()}
                     />
                     <Button
@@ -226,29 +266,55 @@ function RestPage() {
 
             <div className="flex-1 flex overflow-hidden">
                 <div className="flex-1 flex flex-col min-w-0">
-                    <div className="border-b p-2 bg-gray-100 text-xs font-semibold text-gray-500 uppercase flex justify-between items-center">
-                        <span>Response Body</span>
-                        {response && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 text-xs"
-                                onClick={() => {
-                                    navigator.clipboard.writeText(response);
-                                }}
-                            >
-                                <Copy className="h-3 w-3 mr-1" /> Copy
-                            </Button>
-                        )}
-                    </div>
-                    <div className="flex-1 bg-gray-900 text-green-400 p-4 font-mono text-sm overflow-auto">
-                        {response ? (
-                            <pre>{response}</pre>
-                        ) : (
-                            <div className="text-gray-500 italic">
-                                Execute a request to see the response here...
+                    {['POST', 'PUT', 'PATCH'].includes(method) && (
+                        <div className="flex-[0.4] flex flex-col border-b">
+                            <div className="border-b p-2 bg-gray-100 text-xs font-semibold text-gray-500 uppercase flex items-center gap-2">
+                                <Code className="h-3 w-3" />
+                                <span>Request Body (JSON)</span>
                             </div>
-                        )}
+                            <Textarea
+                                className="flex-1 font-mono text-xs p-3 border-0 resize-none focus-visible:ring-0 rounded-none bg-gray-50"
+                                value={body}
+                                onChange={(e) => setBody(e.target.value)}
+                                placeholder='{ "name": "example" }'
+                            />
+                        </div>
+                    )}
+                    <div className="flex-1 flex flex-col">
+                        <div className="border-b p-2 bg-gray-100 text-xs font-semibold text-gray-500 uppercase flex justify-between items-center">
+                            <span>Response Body</span>
+                            {rawResponse && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 text-xs"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(
+                                            JSON.stringify(
+                                                rawResponse,
+                                                null,
+                                                2,
+                                            ),
+                                        );
+                                    }}
+                                >
+                                    <Copy className="h-3 w-3 mr-1" /> Copy
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex-1 bg-gray-900 overflow-hidden relative">
+                            {rawResponse ? (
+                                <JsonViewer
+                                    data={rawResponse}
+                                    className="h-full border-0 rounded-none bg-transparent text-green-400"
+                                />
+                            ) : (
+                                <div className="p-4 text-gray-500 italic">
+                                    Execute a request to see the response
+                                    here...
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
