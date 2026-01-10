@@ -1,27 +1,24 @@
 import { createClient } from 'liferay-headless-rest-client';
 
 import { Liferay } from './liferay';
-import { StorageKeys } from '@/utils/storage';
 
 const tauriProxyBaseURL = import.meta.env.TAURI_ENV_PROXY_BASE_URL;
 
 const { liferayInstance = true } = Liferay;
 
-export function getClientOptions() {
+export function getClientOptions(envInfo?: any) {
     const clientOptions: Parameters<typeof createClient>[0] = {};
 
     if (liferayInstance) {
         clientOptions.baseUrl = '/';
         clientOptions.fetch = Liferay.Util.fetch;
     } else {
-        const environmentInfo = localStorage.getItem(
-            StorageKeys.SELECTED_ENVIRONMENT_INFO,
-        );
+        const environmentInfo = envInfo;
 
         let applicationId;
 
         if (environmentInfo) {
-            const { id } = JSON.parse(environmentInfo);
+            const { id } = environmentInfo;
 
             applicationId = id;
         }
@@ -31,8 +28,6 @@ export function getClientOptions() {
             'x-target-id': applicationId,
         };
     }
-
-    console.log({ clientOptions });
 
     return clientOptions;
 }

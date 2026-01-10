@@ -16,6 +16,7 @@ export interface RestHistoryItem extends QueryHistoryItem {
     url: string;
     method: string;
     responseSize?: string;
+    payload?: any;
 }
 
 export interface GraphqlHistoryItem extends QueryHistoryItem {
@@ -26,6 +27,7 @@ export interface GraphqlHistoryItem extends QueryHistoryItem {
 export interface ODataHistoryItem extends QueryHistoryItem {
     query: string;
     endpoint: string;
+    externalReferenceCode: string;
     rowCount?: number;
     error?: string;
 }
@@ -56,7 +58,8 @@ export class AppDatabase extends Dexie {
             appState: 'id',
             columnVisibility: 'id',
             graphqlHistory: 'id, url, executedAt, status, name',
-            odataHistory: 'id, endpoint, executedAt, status, name',
+            odataHistory:
+                'id, endpoint, externalReferenceCode, executedAt, status, name',
             restHistory: 'id, url, method, executedAt, status, name',
         });
     }

@@ -15,6 +15,7 @@ import {
 } from 'liferay-headless-rest-client/object-admin-v1.0';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { liferayClient } from '@/lib/headless-client';
+import { db } from '@/lib/db';
 
 export const Route = createFileRoute('/p/$externalReferenceCode/query')({
     component: RouteComponent,
@@ -117,55 +118,45 @@ function RouteComponent() {
     useEffect(() => {
         const query = search?.query;
         if (!query || queryResults === undefined) return;
-        const storageKey = `queryHistory_${externalReferenceCode}`;
-        let history: any[] = [];
-        try {
-            const saved = localStorage.getItem(storageKey);
-            if (saved) {
-                history = JSON.parse(saved);
+
+        const saveHistory = async () => {
+            const endpoint = objectDefinition?.restContextPath || '';
+            const status = queryResults?.error ? 'error' : 'success';
+            const rowCount = Array.isArray(queryResults?.items)
+                ? queryResults.items.length
+                : 0;
+            const errorMessage = queryResults?.error || undefined;
+
+            // Check for existing item with same query and no results/status yet
+            const existing = await db.odataHistory
+                .where({
+                    query: query,
+                    externalReferenceCode: externalReferenceCode,
+                })
+                .first();
+
+            if (existing) {
+                await db.odataHistory.update(existing.id, {
+                    status,
+                    rowCount,
+                    error: errorMessage,
+                    endpoint,
+                });
+            } else {
+                await db.odataHistory.add({
+                    id: Date.now().toString(),
+                    query,
+                    executedAt: new Date().toLocaleString(),
+                    status,
+                    rowCount,
+                    error: errorMessage,
+                    endpoint,
+                    externalReferenceCode,
+                });
             }
-        } catch {
-            history = [];
-        }
-        const endpoint = objectDefinition?.restContextPath || '';
-        const status = queryResults?.error ? 'error' : 'success';
-        const rowCount = Array.isArray(queryResults?.items)
-            ? queryResults.items.length
-            : 0;
-        const errorMessage = queryResults?.error || undefined;
-        const idx = history.findIndex(
-            (h: any) =>
-                h?.query === query &&
-                (h?.rowCount === undefined ||
-                    h?.status === undefined ||
-                    (status === 'error' && h?.error === undefined)),
-        );
-        if (idx > -1) {
-            history[idx] = {
-                ...history[idx],
-                status,
-                rowCount,
-                error: errorMessage,
-                endpoint,
-            };
-        } else {
-            history.unshift({
-                id: Date.now().toString(),
-                query,
-                executedAt: new Date().toLocaleString(),
-                status,
-                rowCount,
-                error: errorMessage,
-                endpoint,
-            });
-            history = history.slice(0, 50);
-        }
-        try {
-            localStorage.setItem(storageKey, JSON.stringify(history));
-        } catch {
-            console.error('Failed to save query history');
-        }
-        window.dispatchEvent(new Event('queryHistoryUpdated'));
+        };
+
+        saveHistory();
     }, [queryResults, search?.query, externalReferenceCode, objectDefinition]);
 
     const rows = useMemo(() => {

@@ -1,6 +1,3 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,17 +19,8 @@ import {
     Copy,
 } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
-
-interface QueryHistoryItem {
-    id: string;
-    query: string;
-    executedAt: string;
-    duration?: string;
-    status: 'success' | 'error';
-    rowCount?: number;
-    error?: string;
-    endpoint: string;
-}
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/lib/db';
 
 interface QueryHistoryProps {
     externalReferenceCode: string;
@@ -40,34 +28,16 @@ interface QueryHistoryProps {
 
 export function QueryHistory({ externalReferenceCode }: QueryHistoryProps) {
     const navigate = useNavigate({ from: '/p/$externalReferenceCode/query' });
-    const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>([]);
-    const storageKey = `queryHistory_${externalReferenceCode}`;
-
-    useEffect(() => {
-        const loadHistory = () => {
-            const savedHistory = localStorage.getItem(storageKey);
-            if (savedHistory) {
-                try {
-                    const parsed = JSON.parse(savedHistory);
-                    setQueryHistory(parsed);
-                } catch {
-                    setQueryHistory([]);
-                }
-            } else {
-                setQueryHistory([]);
-            }
-        };
-
-        loadHistory();
-
-        const handler = () => loadHistory();
-
-        window.addEventListener('queryHistoryUpdated', handler);
-
-        return () => {
-            window.removeEventListener('queryHistoryUpdated', handler);
-        };
-    }, [storageKey]);
+    const queryHistory =
+        useLiveQuery(
+            () =>
+                db.odataHistory
+                    .where('externalReferenceCode')
+                    .equals(externalReferenceCode)
+                    .reverse()
+                    .sortBy('executedAt'),
+            [externalReferenceCode],
+        ) || [];
 
     const loadQuery = (query: string) => {
         navigate({
@@ -82,22 +52,8 @@ export function QueryHistory({ externalReferenceCode }: QueryHistoryProps) {
         });
     };
 
-    const deleteQuery = (id: string) => {
-        try {
-            const savedHistory = localStorage.getItem(storageKey);
-            const current = savedHistory ? JSON.parse(savedHistory) : [];
-            const next = current.filter(
-                (item: QueryHistoryItem) => item.id !== id,
-            );
-
-            localStorage.setItem(storageKey, JSON.stringify(next));
-
-            setQueryHistory(next);
-
-            window.dispatchEvent(new Event('queryHistoryUpdated'));
-        } catch {
-            // noop
-        }
+    const deleteQuery = async (id: string) => {
+        await db.odataHistory.delete(id);
     };
 
     return (

@@ -12,6 +12,7 @@ import {
     TimerReset,
     FileText,
     Activity,
+    ChevronDown,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -30,17 +31,24 @@ interface SidebarProps {
 
 function getContrastingTextColor(hex?: string) {
     if (!hex) return '#111827';
+
     const m = /^#?([a-fA-F0-9]{6})$/.exec(hex.trim());
+
     if (!m) return '#111827';
+
     const n = parseInt(m[1], 16);
     const r = (n >> 16) & 255;
     const g = (n >> 8) & 255;
     const b = n & 255;
     const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+
     return yiq >= 128 ? '#111827' : '#FFFFFF';
 }
 
-export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
+export function Sidebar({
+    onExportImport,
+    objectDefinitions = [],
+}: SidebarProps) {
     const location = useLocation();
     const navigate = useNavigate();
     const sidebarState = useLiveQuery(() =>
@@ -61,10 +69,6 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
         .split('/')
         .filter(Boolean);
 
-    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-        new Set(['']),
-    );
-
     const objectDefinitionGroups = (objectDefinitions || []).reduce(
         (acc, objectDefinition) => {
             const key =
@@ -77,6 +81,10 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
             return acc;
         },
         {} as Record<string, typeof objectDefinitions>,
+    );
+
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+        () => new Set(),
     );
 
     const toggleGroup = (groupName: string) => {
@@ -103,7 +111,7 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
     return (
         <div
             className={cn(
-                'bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out overflow-hidden',
+                'bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out overflow-hidden h-full',
                 collapsed ? 'w-16 min-w-16 max-w-16' : 'w-80 min-w-80 max-w-80',
             )}
         >
@@ -117,7 +125,7 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                     >
                         <Database className="h-6 w-6 text-blue-600 shrink-0" />
                         <h1 className="font-montserrat font-bold text-lg text-gray-900 truncate">
-                            Data Studio
+                            Liferay Data Studio
                         </h1>
                     </div>
                 )}
@@ -162,6 +170,84 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                             </h3>
                         )}
 
+                        {/* Objects Group */}
+                        <div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleGroup('objects')}
+                                className="w-full justify-start p-2 h-auto font-medium text-gray-700 hover:bg-gray-100 overflow-hidden"
+                            >
+                                <Folder className="h-4 w-4 shrink-0" />
+
+                                {!collapsed && (
+                                    <span className="truncate capitalize">
+                                        Objects (
+                                        {(objectDefinitions || []).length})
+                                    </span>
+                                )}
+                            </Button>
+
+                            {expandedGroups.has('objects') && !collapsed && (
+                                <div className="ml-4 mt-1 space-y-1 border-l pl-2">
+                                    {Object.entries(objectDefinitionGroups).map(
+                                        ([group, definitions]) => (
+                                            <div key={group} className="mt-2">
+                                                <button
+                                                    onClick={() =>
+                                                        toggleGroup(group)
+                                                    }
+                                                    className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider hover:bg-gray-50 rounded transition-colors"
+                                                >
+                                                    <span>{group}</span>
+                                                    <ChevronDown
+                                                        className={cn(
+                                                            'h-3 w-3 transition-transform',
+                                                            !expandedGroups.has(
+                                                                group,
+                                                            ) && '-rotate-90',
+                                                        )}
+                                                    />
+                                                </button>
+                                                {expandedGroups.has(group) && (
+                                                    <div className="mt-1 space-y-0.5">
+                                                        {definitions.map(
+                                                            (def) => (
+                                                                <Button
+                                                                    key={
+                                                                        def.externalReferenceCode
+                                                                    }
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        onSelectObject(
+                                                                            def,
+                                                                        )
+                                                                    }
+                                                                    className={cn(
+                                                                        'w-full justify-start p-1.5 h-auto text-left hover:bg-gray-100 text-sm pl-4',
+                                                                        externalReferenceCode ===
+                                                                            def.externalReferenceCode &&
+                                                                            'bg-blue-50 text-blue-900 font-medium',
+                                                                    )}
+                                                                >
+                                                                    <span className="truncate">
+                                                                        {
+                                                                            def.name
+                                                                        }
+                                                                    </span>
+                                                                </Button>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ),
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
                         {/* Pick Lists */}
                         <Button
                             variant="ghost"
@@ -182,60 +268,6 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                                 )}
                             </div>
                         </Button>
-
-                        {/* Objects Group */}
-                        <div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toggleGroup('objects')}
-                                className="w-full justify-start p-2 h-auto font-medium text-gray-700 hover:bg-gray-100 overflow-hidden"
-                            >
-                                <Folder className="h-4 w-4 shrink-0" />
-
-                                {!collapsed && (
-                                    <span className="truncate capitalize">
-                                        Objects ({objectDefinitions.length})
-                                    </span>
-                                )}
-                            </Button>
-
-                            {expandedGroups.has('objects') && !collapsed && (
-                                <div className="ml-4 mt-1 space-y-1 border-l pl-2">
-                                    {Object.entries(objectDefinitionGroups).map(
-                                        ([group, definitions]) => (
-                                            <div key={group}>
-                                                <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">
-                                                    {group}
-                                                </div>
-                                                {definitions.map((def) => (
-                                                    <Button
-                                                        key={
-                                                            def.externalReferenceCode
-                                                        }
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            onSelectObject(def)
-                                                        }
-                                                        className={cn(
-                                                            'w-full justify-start p-1.5 h-auto text-left hover:bg-gray-100 text-sm pl-4',
-                                                            externalReferenceCode ===
-                                                                def.externalReferenceCode &&
-                                                                'bg-blue-50 text-blue-900 font-medium',
-                                                        )}
-                                                    >
-                                                        <span className="truncate">
-                                                            {def.name}
-                                                        </span>
-                                                    </Button>
-                                                ))}
-                                            </div>
-                                        ),
-                                    )}
-                                </div>
-                            )}
-                        </div>
                     </div>
 
                     {/* Mailing Section */}
