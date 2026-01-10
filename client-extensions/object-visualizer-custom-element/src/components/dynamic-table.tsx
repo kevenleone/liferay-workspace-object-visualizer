@@ -48,6 +48,7 @@ import {
     useParams,
     useLocation,
 } from '@tanstack/react-router';
+import { db } from '@/lib/db';
 
 type Props = {
     data: any[];
@@ -182,41 +183,29 @@ export default function JsonToCsvConverter({
 
                 setHeaders(headerArray);
 
-                // Load column visibility from localStorage
+                // Load column visibility from Dexie
                 const storageKey = `columnVisibility_${externalReferenceCode}`;
-                const savedVisibility = localStorage.getItem(storageKey);
-                if (savedVisibility) {
-                    try {
-                        const parsed = JSON.parse(savedVisibility);
-                        // Initialize visibility for all headers (default: true)
+                const loadVisibility = async () => {
+                    if (!externalReferenceCode) return;
+                    const saved = await db.columnVisibility.get(storageKey);
+                    if (saved) {
                         const initialVisibility: Record<string, boolean> = {};
                         headerArray.forEach((header) => {
                             initialVisibility[header] =
-                                parsed[header] !== undefined
-                                    ? parsed[header]
+                                saved.visibility[header] !== undefined
+                                    ? saved.visibility[header]
                                     : true;
                         });
                         setColumnVisibility(initialVisibility);
-                    } catch (error) {
-                        console.error(
-                            'Error parsing column visibility:',
-                            error,
-                        );
-                        // Initialize all columns as visible
+                    } else {
                         const initialVisibility: Record<string, boolean> = {};
                         headerArray.forEach((header) => {
                             initialVisibility[header] = true;
                         });
                         setColumnVisibility(initialVisibility);
                     }
-                } else {
-                    // Initialize all columns as visible
-                    const initialVisibility: Record<string, boolean> = {};
-                    headerArray.forEach((header) => {
-                        initialVisibility[header] = true;
-                    });
-                    setColumnVisibility(initialVisibility);
-                }
+                };
+                loadVisibility();
 
                 // Create CSV content
                 const csvRows = dataArray.map((item) => {
@@ -254,11 +243,14 @@ export default function JsonToCsvConverter({
         }
     }, [convertJsonToCsv, data]);
 
-    // Save column visibility to localStorage whenever it changes
+    // Save column visibility to Dexie whenever it changes
     useEffect(() => {
         if (Object.keys(columnVisibility).length > 0 && externalReferenceCode) {
             const storageKey = `columnVisibility_${externalReferenceCode}`;
-            localStorage.setItem(storageKey, JSON.stringify(columnVisibility));
+            db.columnVisibility.put({
+                id: storageKey,
+                visibility: columnVisibility,
+            });
         }
     }, [columnVisibility, externalReferenceCode]);
 

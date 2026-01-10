@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import {
     Send,
@@ -28,23 +28,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db, type RestHistoryItem } from '@/lib/db';
 export const Route = createFileRoute('/p/query/rest')({
     component: RestPage,
 });
-
-interface QueryHistoryItem {
-    id: string;
-    url: string;
-    method: string;
-    executedAt: string;
-    duration?: string;
-    status: 'success' | 'error';
-    statusCode?: number;
-    responseSize?: string;
-    response?: any;
-    name?: string;
-}
 
 function RestPage() {
     const [url, setUrl] = useState(
@@ -53,30 +41,12 @@ function RestPage() {
     const [method] = useState('GET');
     const [response, setResponse] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [history, setHistory] = useState<QueryHistoryItem[]>([]);
     const [queryName, setQueryName] = useState('');
     const [showHistory, setShowHistory] = useState(true);
-
-    const storageKey = 'rest_client_history';
-
-    // Load history
-    useEffect(() => {
-        try {
-            const saved = localStorage.getItem(storageKey);
-            if (saved) {
-                setHistory(JSON.parse(saved));
-            }
-        } catch (e) {
-            console.error('Failed to load history', e);
-        }
-    }, []);
-
-    // Save history
-    useEffect(() => {
-        if (history.length > 0) {
-            localStorage.setItem(storageKey, JSON.stringify(history));
-        }
-    }, [history]);
+    const history =
+        useLiveQuery(() =>
+            db.restHistory.orderBy('executedAt').reverse().toArray(),
+        ) || [];
 
     const executeQuery = async () => {
         if (!url) return;
@@ -100,66 +70,67 @@ function RestPage() {
 
             setResponse(JSON.stringify(data, null, 2));
 
-            const newItem: QueryHistoryItem = {
+            const newItem: RestHistoryItem = {
                 id: Date.now().toString(),
                 url,
                 method,
-                executedAt: new Date().toLocaleString(),
+                executedAt: new Date().toISOString(),
                 duration,
                 status: res.ok ? 'success' : 'error',
                 statusCode: res.status,
+                responseSize: `${(JSON.stringify(data).length / 1024).toFixed(2)} KB`,
                 response: data,
             };
 
-            setHistory((prev) => [newItem, ...prev.slice(0, 49)]);
+            await db.restHistory.add(newItem);
         } catch (err: any) {
             const endTime = performance.now();
             const duration = `${((endTime - startTime) / 1000).toFixed(3)}s`;
 
             setResponse(JSON.stringify({ error: err.message }, null, 2));
 
-            const newItem: QueryHistoryItem = {
+            const newItem: RestHistoryItem = {
                 id: Date.now().toString(),
                 url,
                 method,
-                executedAt: new Date().toLocaleString(),
+                executedAt: new Date().toISOString(),
                 duration,
                 status: 'error',
                 statusCode: 0,
                 response: { error: err.message },
             };
 
-            setHistory((prev) => [newItem, ...prev.slice(0, 49)]);
+            await db.restHistory.add(newItem);
         } finally {
             setLoading(false);
         }
     };
 
-    const saveQuery = () => {
-        if (!url.trim() || !queryName.trim()) return;
+    const saveQuery = async () => {
+        if (!url || !queryName.trim()) return;
 
-        const newItem: QueryHistoryItem = {
+        const newItem: RestHistoryItem = {
             id: Date.now().toString(),
             url,
             method,
-            executedAt: new Date().toLocaleString(),
+            executedAt: new Date().toISOString(),
             status: 'success',
             name: queryName.trim(),
         };
 
-        setHistory((prev) => [newItem, ...prev.slice(0, 49)]);
+        await db.restHistory.add(newItem);
         setQueryName('');
     };
 
-    const loadHistoryItem = (item: QueryHistoryItem) => {
+    const loadHistoryItem = (item: RestHistoryItem) => {
         setUrl(item.url);
         if (item.response) {
             setResponse(JSON.stringify(item.response, null, 2));
         }
     };
 
-    const deleteHistoryItem = (id: string) => {
-        setHistory((prev) => prev.filter((i) => i.id !== id));
+    const deleteHistoryItem = async (id: string) => {
+        await db.restHistory.delete(id);
     };
 
     const savedQueries = history.filter((h) => h.name);

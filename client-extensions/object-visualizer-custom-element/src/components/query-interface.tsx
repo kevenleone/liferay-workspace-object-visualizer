@@ -34,24 +34,14 @@ import {
 } from 'lucide-react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db, type ODataHistoryItem } from '@/lib/db';
 
 interface QueryInterfaceProps {
     objectDefinition: ObjectDefinition;
     externalReferenceCode: string;
     onQueryExecute?: (query: string) => void;
     showHistory?: boolean;
-}
-
-interface QueryHistoryItem {
-    id: string;
-    query: string;
-    executedAt: string;
-    duration?: string;
-    status: 'success' | 'error';
-    rowCount?: number;
-    error?: string;
-    endpoint: string;
-    name?: string;
 }
 
 export function QueryInterface({
@@ -63,24 +53,18 @@ export function QueryInterface({
     const navigate = useNavigate({ from: '/p/$externalReferenceCode/query' });
     const search = useSearch({ from: '/p/$externalReferenceCode/query' });
     const [currentQuery, setCurrentQuery] = useState(search.query || '');
-    const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>([]);
     const [queryName, setQueryName] = useState('');
 
-    const storageKey = `queryHistory_${externalReferenceCode}`;
-    const restContextPath = objectDefinition.restContextPath;
+    const restContextPath = objectDefinition.restContextPath || '';
 
-    // Load query history from localStorage on mount
-    useEffect(() => {
-        const savedHistory = localStorage.getItem(storageKey);
-        if (savedHistory) {
-            try {
-                const parsed = JSON.parse(savedHistory);
-                setQueryHistory(parsed);
-            } catch (error) {
-                console.error('Error parsing query history:', error);
-            }
-        }
-    }, [storageKey]);
+    const queryHistory =
+        useLiveQuery(() =>
+            db.odataHistory
+                .where('endpoint')
+                .equals(restContextPath)
+                .reverse()
+                .sortBy('executedAt'),
+        ) || [];
 
     // Update current query when search params change
     useEffect(() => {
@@ -88,31 +72,6 @@ export function QueryInterface({
             setCurrentQuery(search.query);
         }
     }, [search.query]);
-
-    // Save query history to localStorage whenever it changes
-    useEffect(() => {
-        if (queryHistory.length > 0) {
-            localStorage.setItem(storageKey, JSON.stringify(queryHistory));
-        }
-    }, [queryHistory, storageKey]);
-
-    useEffect(() => {
-        const handler = () => {
-            const savedHistory = localStorage.getItem(storageKey);
-            if (savedHistory) {
-                try {
-                    const parsed = JSON.parse(savedHistory);
-                    setQueryHistory(parsed);
-                } catch {
-                    setQueryHistory([]);
-                }
-            }
-        };
-        window.addEventListener('queryHistoryUpdated', handler);
-        return () => {
-            window.removeEventListener('queryHistoryUpdated', handler);
-        };
-    }, [storageKey]);
 
     const executeQuery = async () => {
         const startTime = performance.now();
@@ -137,31 +96,31 @@ export function QueryInterface({
 
         // We'll update history after the query completes (in the route component)
         // For now, just add a pending entry
-        const historyItem: QueryHistoryItem = {
+        const historyItem: ODataHistoryItem = {
             id: Date.now().toString(),
             query: currentQuery,
-            executedAt: new Date().toLocaleString(),
+            executedAt: new Date().toISOString(),
             duration,
             status: 'success',
-            endpoint: restContextPath || '',
+            endpoint: restContextPath,
         };
 
-        setQueryHistory((prev) => [historyItem, ...prev.slice(0, 49)]); // Keep last 50
+        await db.odataHistory.add(historyItem);
     };
 
-    const saveQuery = () => {
+    const saveQuery = async () => {
         if (!currentQuery.trim() || !queryName.trim()) return;
 
-        const historyItem: QueryHistoryItem = {
+        const historyItem: ODataHistoryItem = {
             id: Date.now().toString(),
             query: currentQuery,
-            executedAt: new Date().toLocaleString(),
+            executedAt: new Date().toISOString(),
             status: 'success',
-            endpoint: restContextPath || '',
+            endpoint: restContextPath,
             name: queryName.trim(),
         };
 
-        setQueryHistory((prev) => [historyItem, ...prev.slice(0, 49)]);
+        await db.odataHistory.add(historyItem);
         setQueryName('');
     };
 
@@ -179,8 +138,8 @@ export function QueryInterface({
         });
     };
 
-    const deleteQuery = (id: string) => {
-        setQueryHistory((prev) => prev.filter((item) => item.id !== id));
+    const deleteQuery = async (id: string) => {
+        await db.odataHistory.delete(id);
     };
 
     const getApiEndpoint = () => {
@@ -202,7 +161,7 @@ export function QueryInterface({
                             <Select
                                 onValueChange={(id) => {
                                     const item = queryHistory.find(
-                                        (h) => h.id === id
+                                        (h) => h.id === id,
                                     );
                                     if (item) {
                                         loadQuery(item.query);
@@ -373,7 +332,7 @@ Leave empty to fetch all records with default pagination.`}
                                                         <DropdownMenuItem
                                                             onClick={() =>
                                                                 loadQuery(
-                                                                    historyItem.query
+                                                                    historyItem.query,
                                                                 )
                                                             }
                                                         >
@@ -385,7 +344,7 @@ Leave empty to fetch all records with default pagination.`}
                                                             className="text-destructive"
                                                             onClick={() =>
                                                                 deleteQuery(
-                                                                    historyItem.id
+                                                                    historyItem.id,
                                                                 )
                                                             }
                                                         >

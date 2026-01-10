@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import {
     Play,
@@ -29,22 +29,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db, type GraphqlHistoryItem } from '@/lib/db';
 
 export const Route = createFileRoute('/p/query/graphql')({
     component: GraphQLPage,
 });
-
-interface QueryHistoryItem {
-    id: string;
-    url: string;
-    query: string;
-    executedAt: string;
-    duration?: string;
-    status: 'success' | 'error';
-    statusCode?: number;
-    response?: any;
-    name?: string;
-}
 
 function GraphQLPage() {
     const [url, setUrl] = useState('http://localhost:8080/o/graphql');
@@ -59,30 +49,12 @@ function GraphQLPage() {
 }`);
     const [response, setResponse] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [history, setHistory] = useState<QueryHistoryItem[]>([]);
     const [queryName, setQueryName] = useState('');
     const [showHistory, setShowHistory] = useState(true);
-
-    const storageKey = 'graphql_playground_history';
-
-    // Load history
-    useEffect(() => {
-        try {
-            const saved = localStorage.getItem(storageKey);
-            if (saved) {
-                setHistory(JSON.parse(saved));
-            }
-        } catch (e) {
-            console.error('Failed to load history', e);
-        }
-    }, []);
-
-    // Save history
-    useEffect(() => {
-        if (history.length > 0) {
-            localStorage.setItem(storageKey, JSON.stringify(history));
-        }
-    }, [history]);
+    const history =
+        useLiveQuery(() =>
+            db.graphqlHistory.orderBy('executedAt').reverse().toArray(),
+        ) || [];
 
     const executeQuery = async () => {
         if (!url || !query) return;
@@ -107,67 +79,67 @@ function GraphQLPage() {
 
             setResponse(JSON.stringify(data, null, 2));
 
-            const newItem: QueryHistoryItem = {
+            const newItem: GraphqlHistoryItem = {
                 id: Date.now().toString(),
                 url,
                 query,
-                executedAt: new Date().toLocaleString(),
+                executedAt: new Date().toISOString(),
                 duration,
-                status: res.ok && !data.errors ? 'success' : 'error',
+                status: res.ok ? 'success' : 'error',
                 statusCode: res.status,
                 response: data,
             };
 
-            setHistory((prev) => [newItem, ...prev.slice(0, 49)]);
+            await db.graphqlHistory.add(newItem);
         } catch (err: any) {
             const endTime = performance.now();
             const duration = `${((endTime - startTime) / 1000).toFixed(3)}s`;
 
             setResponse(JSON.stringify({ error: err.message }, null, 2));
 
-            const newItem: QueryHistoryItem = {
+            const newItem: GraphqlHistoryItem = {
                 id: Date.now().toString(),
                 url,
                 query,
-                executedAt: new Date().toLocaleString(),
+                executedAt: new Date().toISOString(),
                 duration,
                 status: 'error',
                 statusCode: 0,
                 response: { error: err.message },
             };
 
-            setHistory((prev) => [newItem, ...prev.slice(0, 49)]);
+            await db.graphqlHistory.add(newItem);
         } finally {
             setLoading(false);
         }
     };
 
-    const saveQuery = () => {
-        if (!query.trim() || !queryName.trim()) return;
+    const saveQuery = async () => {
+        if (!url || !query || !queryName.trim()) return;
 
-        const newItem: QueryHistoryItem = {
+        const newItem: GraphqlHistoryItem = {
             id: Date.now().toString(),
             url,
             query,
-            executedAt: new Date().toLocaleString(),
+            executedAt: new Date().toISOString(),
             status: 'success',
             name: queryName.trim(),
         };
 
-        setHistory((prev) => [newItem, ...prev.slice(0, 49)]);
+        await db.graphqlHistory.add(newItem);
         setQueryName('');
     };
 
-    const loadHistoryItem = (item: QueryHistoryItem) => {
+    const loadHistoryItem = (item: GraphqlHistoryItem) => {
+        setUrl(item.url);
         setQuery(item.query);
-        setUrl(item.url || url);
         if (item.response) {
             setResponse(JSON.stringify(item.response, null, 2));
         }
     };
 
-    const deleteHistoryItem = (id: string) => {
-        setHistory((prev) => prev.filter((i) => i.id !== id));
+    const deleteHistoryItem = async (id: string) => {
+        await db.graphqlHistory.delete(id);
     };
 
     const savedQueries = history.filter((h) => h.name);

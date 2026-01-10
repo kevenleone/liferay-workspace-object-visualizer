@@ -8,27 +8,22 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Liferay } from '@/lib/liferay';
 import { liferayClient } from '@/lib/headless-client';
-import { StorageKeys } from '@/utils/storage';
+import { db } from '@/lib/db';
 import JsonToCsvConverter from '@/components/dynamic-table';
 
-function setObjectDefinitionTotalCount(
+async function setObjectDefinitionTotalCount(
     externalReferenceCode: string,
     totalCount: number,
 ) {
-    let objectDefinitionCount = localStorage.getItem(
-        StorageKeys.DEFINITION_COUNT,
-    ) as any;
+    const state = await db.appState.get('definitionCount');
+    const definitionCount = state ? state.value : {};
 
-    objectDefinitionCount = objectDefinitionCount
-        ? JSON.parse(objectDefinitionCount)
-        : {};
+    definitionCount[externalReferenceCode] = totalCount;
 
-    objectDefinitionCount[externalReferenceCode] = totalCount;
-
-    localStorage.setItem(
-        StorageKeys.DEFINITION_COUNT,
-        JSON.stringify(objectDefinitionCount),
-    );
+    await db.appState.put({
+        id: 'definitionCount',
+        value: definitionCount,
+    });
 }
 
 export const Route = createFileRoute('/p/$externalReferenceCode/')({
@@ -83,13 +78,17 @@ export const Route = createFileRoute('/p/$externalReferenceCode/')({
             };
 
             if (data && loaderData?.externalReferenceCode) {
-                setObjectDefinitionTotalCount(
+                await setObjectDefinitionTotalCount(
                     loaderData?.externalReferenceCode,
                     data.totalCount ?? 0,
                 );
             }
 
-            return data;
+            return {
+                ...data,
+                page,
+                pageSize,
+            };
         } catch (error) {
             console.error(error);
         }
@@ -97,6 +96,8 @@ export const Route = createFileRoute('/p/$externalReferenceCode/')({
         return {
             items: [],
             totalCount: 0,
+            page,
+            pageSize,
         };
     },
     staleTime: 60000,
