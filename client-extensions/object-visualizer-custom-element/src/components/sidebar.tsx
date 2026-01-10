@@ -1,13 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
 import {
-    ChevronDown,
     ChevronLeft,
-    ChevronRight,
     Database,
     Download,
     Folder,
-    FolderOpen,
     RefreshCw,
     Search,
     Server,
@@ -15,7 +12,6 @@ import {
     TimerReset,
     FileText,
     Activity,
-    Layers,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -24,21 +20,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { StorageKeys } from '@/utils/storage';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/lib/db';
 
 interface SidebarProps {
     onExportImport?: (initialTab?: 'export' | 'import') => void;
     objectDefinitions: Required<ObjectDefinition>[];
-}
-
-function getDefinitionRows() {
-    const definitionRows = localStorage.getItem(StorageKeys.DEFINITION_COUNT);
-
-    if (definitionRows) {
-        return JSON.parse(definitionRows);
-    }
-
-    return {};
 }
 
 function getContrastingTextColor(hex?: string) {
@@ -56,21 +43,21 @@ function getContrastingTextColor(hex?: string) {
 export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
     const location = useLocation();
     const navigate = useNavigate();
-    const [collapsed, onToggleCollapse] = useState<boolean>(() => {
-        try {
-            const saved = localStorage.getItem('sidebarCollapsed');
-            return saved ? JSON.parse(saved) === true : false;
-        } catch {
-            return false;
-        }
-    });
+    const sidebarState = useLiveQuery(() =>
+        db.appState.get('sidebarCollapsed'),
+    );
+    const collapsed = sidebarState?.value === true;
 
-    const definitionRows = getDefinitionRows();
-    const [searchQuery, setSearchQuery] = useState('');
-    const [syncEnabled, setSyncEnabled] = useState(true);
-    const [selectedEnvInfo, setSelectedEnvInfo] = useState<any | null>(null);
+    const onToggleCollapse = async () => {
+        await db.appState.put({ id: 'sidebarCollapsed', value: !collapsed });
+    };
 
-    const [, currentSection, externalReferenceCode] = location.pathname
+    const envState = useLiveQuery(() =>
+        db.appState.get('selectedEnvironmentInfo'),
+    );
+    const selectedEnvInfo = envState?.value || null;
+
+    const [, , externalReferenceCode] = location.pathname
         .split('/')
         .filter(Boolean);
 
@@ -108,28 +95,8 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
         navigate({ to: `/p/${objectDefinition.externalReferenceCode}` });
     };
 
-    useEffect(() => {
-        try {
-            localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
-        } catch {
-            void 0;
-        }
-    }, [collapsed]);
-
-    useEffect(() => {
-        try {
-            const raw = localStorage.getItem(
-                StorageKeys.SELECTED_ENVIRONMENT_INFO,
-            );
-            if (raw) {
-                setSelectedEnvInfo(JSON.parse(raw));
-            } else {
-                setSelectedEnvInfo(null);
-            }
-        } catch {
-            setSelectedEnvInfo(null);
-        }
-    }, []);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [syncEnabled, setSyncEnabled] = useState(true);
 
     const isActive = (path: string) => location.pathname.includes(path);
 
@@ -156,7 +123,7 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                 )}
                 {/* Collapse toggle button */}
                 <button
-                    onClick={() => onToggleCollapse((value) => !value)}
+                    onClick={() => onToggleCollapse()}
                     className="p-1 hover:bg-gray-100 rounded-md shrink-0 transition-colors"
                     title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 >
@@ -502,11 +469,11 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                             <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                     e.preventDefault();
 
-                                    localStorage.removeItem(
-                                        StorageKeys.SELECTED_ENVIRONMENT_INFO,
+                                    await db.appState.delete(
+                                        'selectedEnvironmentInfo',
                                     );
 
                                     navigate({ to: '/environments' });
