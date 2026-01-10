@@ -16,9 +16,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Plus, Eye, EyeOff, Check, Settings } from 'lucide-react';
-import { StorageKeys } from '@/utils/storage';
 import { getClientOptions, liferayClient } from '@/lib/headless-client';
 import { tauriFetch } from '@/lib/tauri-client';
+import { db } from '@/lib/db';
 
 interface Environment {
     id: string;
@@ -187,7 +187,7 @@ export function EnvironmentSetup({
         }
     };
 
-    const handleConnect = (environmentId: string) => {
+    const handleConnect = async (environmentId: string) => {
         try {
             const env = savedEnvironments.find((e) => e.id === environmentId);
             if (env) {
@@ -206,17 +206,17 @@ export function EnvironmentSetup({
                     baseUrl,
                 };
 
-                localStorage.setItem(
-                    StorageKeys.SELECTED_ENVIRONMENT_INFO,
-                    JSON.stringify(sanitized),
-                );
+                await db.appState.put({
+                    id: 'selectedEnvironmentInfo',
+                    value: sanitized,
+                });
 
-                liferayClient.setConfig(getClientOptions());
+                liferayClient.setConfig(getClientOptions(sanitized));
 
                 invalidate();
             }
-        } catch {
-            void 0;
+        } catch (error) {
+            console.error('Failed to connect:', error);
         }
         onEnvironmentSelect(environmentId);
         navigate({ to: '/p' });

@@ -3,6 +3,8 @@ import { RouterProvider } from '@tanstack/react-router';
 
 import tailwindStyleSheet from './core/tailwind-ui.ts';
 import { router } from './core/tanstack-router.tsx';
+import { db } from './lib/db';
+import { liferayClient, getClientOptions } from './lib/headless-client';
 
 class ShadcnCustomElement extends HTMLElement {
     private root: Root | undefined;
@@ -13,8 +15,15 @@ class ShadcnCustomElement extends HTMLElement {
         this.attachShadow({ mode: 'open' });
     }
 
-    connectedCallback() {
+    async connectedCallback() {
         if (!this.root) {
+            // Initialize client from Dexie
+            const envState = await db.appState.get('selectedEnvironmentInfo');
+
+            if (envState?.value) {
+                liferayClient.setConfig(getClientOptions(envState.value));
+            }
+
             const mountPoint = document.createElement('div');
 
             this.shadowRoot!.appendChild(mountPoint);
