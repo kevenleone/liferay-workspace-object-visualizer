@@ -14,8 +14,14 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as PRouteRouteImport } from './routes/p/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PIndexRouteImport } from './routes/p/index'
+import { Route as PPickListsRouteImport } from './routes/p/pick-lists'
+import { Route as PDocumentsRouteImport } from './routes/p/documents'
 import { Route as PExternalReferenceCodeRouteRouteImport } from './routes/p/$externalReferenceCode/route'
 import { Route as PExternalReferenceCodeIndexRouteImport } from './routes/p/$externalReferenceCode/index'
+import { Route as PQueryRestRouteImport } from './routes/p/query/rest'
+import { Route as PQueryGraphqlRouteImport } from './routes/p/query/graphql'
+import { Route as PMailingNotificationTemplatesRouteImport } from './routes/p/mailing/notification-templates'
+import { Route as PMailingNotificationQueueRouteImport } from './routes/p/mailing/notification-queue'
 import { Route as PExternalReferenceCodeSchemaRouteImport } from './routes/p/$externalReferenceCode/schema'
 import { Route as PExternalReferenceCodeQueryRouteImport } from './routes/p/$externalReferenceCode/query'
 
@@ -44,6 +50,16 @@ const PIndexRoute = PIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PRouteRoute,
 } as any)
+const PPickListsRoute = PPickListsRouteImport.update({
+  id: '/pick-lists',
+  path: '/pick-lists',
+  getParentRoute: () => PRouteRoute,
+} as any)
+const PDocumentsRoute = PDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => PRouteRoute,
+} as any)
 const PExternalReferenceCodeRouteRoute =
   PExternalReferenceCodeRouteRouteImport.update({
     id: '/$externalReferenceCode',
@@ -55,6 +71,28 @@ const PExternalReferenceCodeIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => PExternalReferenceCodeRouteRoute,
+  } as any)
+const PQueryRestRoute = PQueryRestRouteImport.update({
+  id: '/query/rest',
+  path: '/query/rest',
+  getParentRoute: () => PRouteRoute,
+} as any)
+const PQueryGraphqlRoute = PQueryGraphqlRouteImport.update({
+  id: '/query/graphql',
+  path: '/query/graphql',
+  getParentRoute: () => PRouteRoute,
+} as any)
+const PMailingNotificationTemplatesRoute =
+  PMailingNotificationTemplatesRouteImport.update({
+    id: '/mailing/notification-templates',
+    path: '/mailing/notification-templates',
+    getParentRoute: () => PRouteRoute,
+  } as any)
+const PMailingNotificationQueueRoute =
+  PMailingNotificationQueueRouteImport.update({
+    id: '/mailing/notification-queue',
+    path: '/mailing/notification-queue',
+    getParentRoute: () => PRouteRoute,
   } as any)
 const PExternalReferenceCodeSchemaRoute =
   PExternalReferenceCodeSchemaRouteImport.update({
@@ -75,18 +113,30 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/environments': typeof EnvironmentsRoute
   '/p/$externalReferenceCode': typeof PExternalReferenceCodeRouteRouteWithChildren
+  '/p/documents': typeof PDocumentsRoute
+  '/p/pick-lists': typeof PPickListsRoute
   '/p/': typeof PIndexRoute
   '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
   '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
+  '/p/mailing/notification-queue': typeof PMailingNotificationQueueRoute
+  '/p/mailing/notification-templates': typeof PMailingNotificationTemplatesRoute
+  '/p/query/graphql': typeof PQueryGraphqlRoute
+  '/p/query/rest': typeof PQueryRestRoute
   '/p/$externalReferenceCode/': typeof PExternalReferenceCodeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/environments': typeof EnvironmentsRoute
+  '/p/documents': typeof PDocumentsRoute
+  '/p/pick-lists': typeof PPickListsRoute
   '/p': typeof PIndexRoute
   '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
   '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
+  '/p/mailing/notification-queue': typeof PMailingNotificationQueueRoute
+  '/p/mailing/notification-templates': typeof PMailingNotificationTemplatesRoute
+  '/p/query/graphql': typeof PQueryGraphqlRoute
+  '/p/query/rest': typeof PQueryRestRoute
   '/p/$externalReferenceCode': typeof PExternalReferenceCodeIndexRoute
 }
 export interface FileRoutesById {
@@ -96,9 +146,15 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/environments': typeof EnvironmentsRoute
   '/p/$externalReferenceCode': typeof PExternalReferenceCodeRouteRouteWithChildren
+  '/p/documents': typeof PDocumentsRoute
+  '/p/pick-lists': typeof PPickListsRoute
   '/p/': typeof PIndexRoute
   '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
   '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
+  '/p/mailing/notification-queue': typeof PMailingNotificationQueueRoute
+  '/p/mailing/notification-templates': typeof PMailingNotificationTemplatesRoute
+  '/p/query/graphql': typeof PQueryGraphqlRoute
+  '/p/query/rest': typeof PQueryRestRoute
   '/p/$externalReferenceCode/': typeof PExternalReferenceCodeIndexRoute
 }
 export interface FileRouteTypes {
@@ -109,18 +165,30 @@ export interface FileRouteTypes {
     | '/about'
     | '/environments'
     | '/p/$externalReferenceCode'
+    | '/p/documents'
+    | '/p/pick-lists'
     | '/p/'
     | '/p/$externalReferenceCode/query'
     | '/p/$externalReferenceCode/schema'
+    | '/p/mailing/notification-queue'
+    | '/p/mailing/notification-templates'
+    | '/p/query/graphql'
+    | '/p/query/rest'
     | '/p/$externalReferenceCode/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/environments'
+    | '/p/documents'
+    | '/p/pick-lists'
     | '/p'
     | '/p/$externalReferenceCode/query'
     | '/p/$externalReferenceCode/schema'
+    | '/p/mailing/notification-queue'
+    | '/p/mailing/notification-templates'
+    | '/p/query/graphql'
+    | '/p/query/rest'
     | '/p/$externalReferenceCode'
   id:
     | '__root__'
@@ -129,9 +197,15 @@ export interface FileRouteTypes {
     | '/about'
     | '/environments'
     | '/p/$externalReferenceCode'
+    | '/p/documents'
+    | '/p/pick-lists'
     | '/p/'
     | '/p/$externalReferenceCode/query'
     | '/p/$externalReferenceCode/schema'
+    | '/p/mailing/notification-queue'
+    | '/p/mailing/notification-templates'
+    | '/p/query/graphql'
+    | '/p/query/rest'
     | '/p/$externalReferenceCode/'
   fileRoutesById: FileRoutesById
 }
@@ -179,6 +253,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PIndexRouteImport
       parentRoute: typeof PRouteRoute
     }
+    '/p/pick-lists': {
+      id: '/p/pick-lists'
+      path: '/pick-lists'
+      fullPath: '/p/pick-lists'
+      preLoaderRoute: typeof PPickListsRouteImport
+      parentRoute: typeof PRouteRoute
+    }
+    '/p/documents': {
+      id: '/p/documents'
+      path: '/documents'
+      fullPath: '/p/documents'
+      preLoaderRoute: typeof PDocumentsRouteImport
+      parentRoute: typeof PRouteRoute
+    }
     '/p/$externalReferenceCode': {
       id: '/p/$externalReferenceCode'
       path: '/$externalReferenceCode'
@@ -192,6 +280,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/p/$externalReferenceCode/'
       preLoaderRoute: typeof PExternalReferenceCodeIndexRouteImport
       parentRoute: typeof PExternalReferenceCodeRouteRoute
+    }
+    '/p/query/rest': {
+      id: '/p/query/rest'
+      path: '/query/rest'
+      fullPath: '/p/query/rest'
+      preLoaderRoute: typeof PQueryRestRouteImport
+      parentRoute: typeof PRouteRoute
+    }
+    '/p/query/graphql': {
+      id: '/p/query/graphql'
+      path: '/query/graphql'
+      fullPath: '/p/query/graphql'
+      preLoaderRoute: typeof PQueryGraphqlRouteImport
+      parentRoute: typeof PRouteRoute
+    }
+    '/p/mailing/notification-templates': {
+      id: '/p/mailing/notification-templates'
+      path: '/mailing/notification-templates'
+      fullPath: '/p/mailing/notification-templates'
+      preLoaderRoute: typeof PMailingNotificationTemplatesRouteImport
+      parentRoute: typeof PRouteRoute
+    }
+    '/p/mailing/notification-queue': {
+      id: '/p/mailing/notification-queue'
+      path: '/mailing/notification-queue'
+      fullPath: '/p/mailing/notification-queue'
+      preLoaderRoute: typeof PMailingNotificationQueueRouteImport
+      parentRoute: typeof PRouteRoute
     }
     '/p/$externalReferenceCode/schema': {
       id: '/p/$externalReferenceCode/schema'
@@ -230,13 +346,25 @@ const PExternalReferenceCodeRouteRouteWithChildren =
 
 interface PRouteRouteChildren {
   PExternalReferenceCodeRouteRoute: typeof PExternalReferenceCodeRouteRouteWithChildren
+  PDocumentsRoute: typeof PDocumentsRoute
+  PPickListsRoute: typeof PPickListsRoute
   PIndexRoute: typeof PIndexRoute
+  PMailingNotificationQueueRoute: typeof PMailingNotificationQueueRoute
+  PMailingNotificationTemplatesRoute: typeof PMailingNotificationTemplatesRoute
+  PQueryGraphqlRoute: typeof PQueryGraphqlRoute
+  PQueryRestRoute: typeof PQueryRestRoute
 }
 
 const PRouteRouteChildren: PRouteRouteChildren = {
   PExternalReferenceCodeRouteRoute:
     PExternalReferenceCodeRouteRouteWithChildren,
+  PDocumentsRoute: PDocumentsRoute,
+  PPickListsRoute: PPickListsRoute,
   PIndexRoute: PIndexRoute,
+  PMailingNotificationQueueRoute: PMailingNotificationQueueRoute,
+  PMailingNotificationTemplatesRoute: PMailingNotificationTemplatesRoute,
+  PQueryGraphqlRoute: PQueryGraphqlRoute,
+  PQueryRestRoute: PQueryRestRoute,
 }
 
 const PRouteRouteWithChildren =
