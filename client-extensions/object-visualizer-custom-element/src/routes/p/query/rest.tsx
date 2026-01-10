@@ -14,7 +14,6 @@ import {
     Code,
 } from 'lucide-react';
 import { liferayClient } from '@/lib/headless-client';
-import { JsonViewer } from '@/components/ui/json-viewer';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -302,14 +301,13 @@ function RestPage() {
                                 </Button>
                             )}
                         </div>
-                        <div className="flex-1 bg-gray-900 overflow-hidden relative">
+                        <div className="flex-1 bg-gray-900 text-green-400 p-4 font-mono text-xs overflow-auto">
                             {rawResponse ? (
-                                <JsonViewer
-                                    data={rawResponse}
-                                    className="h-full border-0 rounded-none bg-transparent text-green-400"
-                                />
+                                <pre className="whitespace-pre-wrap break-all">
+                                    {JSON.stringify(rawResponse, null, 2)}
+                                </pre>
                             ) : (
-                                <div className="p-4 text-gray-500 italic">
+                                <div className="text-gray-500 italic">
                                     Execute a request to see the response
                                     here...
                                 </div>
