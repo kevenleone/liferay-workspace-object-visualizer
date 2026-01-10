@@ -13,6 +13,9 @@ import {
     Server,
     Table,
     TimerReset,
+    FileText,
+    Activity,
+    Layers,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -67,7 +70,7 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
     const [syncEnabled, setSyncEnabled] = useState(true);
     const [selectedEnvInfo, setSelectedEnvInfo] = useState<any | null>(null);
 
-    const [, externalReferenceCode] = location.pathname
+    const [, currentSection, externalReferenceCode] = location.pathname
         .split('/')
         .filter(Boolean);
 
@@ -79,7 +82,7 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
         (acc, objectDefinition) => {
             const key =
                 (objectDefinition.objectFolderExternalReferenceCode as string) ||
-                '';
+                'Other';
             if (!acc[key]) {
                 acc[key] = [];
             }
@@ -128,6 +131,8 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
         }
     }, []);
 
+    const isActive = (path: string) => location.pathname.includes(path);
+
     return (
         <div
             className={cn(
@@ -138,10 +143,14 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
             {/* Header */}
             <div className="p-4 border-b border-gray-200 flex items-center justify-between shrink-0">
                 {!collapsed && (
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div
+                        className="flex items-center gap-2 flex-1 min-w-0"
+                        onClick={() => navigate({ to: '/p' })}
+                        role="button"
+                    >
                         <Database className="h-6 w-6 text-blue-600 shrink-0" />
                         <h1 className="font-montserrat font-bold text-lg text-gray-900 truncate">
-                            Objects Browser
+                            Data Studio
                         </h1>
                     </div>
                 )}
@@ -166,7 +175,7 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                     <div className="relative">
                         <Search className="absolute left-3 top-[10px] transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
-                            placeholder="Search objects..."
+                            placeholder="Search..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-9"
@@ -175,123 +184,222 @@ export function Sidebar({ onExportImport, objectDefinitions }: SidebarProps) {
                 </div>
             )}
 
-            {/* Objects List with Groups */}
+            {/* Content List */}
             <ScrollArea className="flex-1">
-                <div className={cn(collapsed ? 'p-1' : 'p-2')}>
-                    {collapsed ? null : (
-                        <>
-                            {Object.entries(objectDefinitionGroups).map(
-                                ([group, _objectDefinitions], index) => {
-                                    const objectDefinitions = (
-                                        _objectDefinitions as Required<
-                                            ObjectDefinition[]
-                                        >
-                                    ).filter((objectDefinition) =>
-                                        objectDefinition?.name
-                                            ?.toLowerCase()
-                                            .includes(
-                                                searchQuery.toLowerCase(),
-                                            ),
-                                    );
+                <div className={cn(collapsed ? 'p-1' : 'p-2', 'space-y-4')}>
+                    {/* Objects Framework Section */}
+                    <div className="space-y-1">
+                        {!collapsed && (
+                            <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Objects Framework
+                            </h3>
+                        )}
 
-                                    return (
-                                        <div className="mb-2" key={index}>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    toggleGroup(group)
-                                                }
-                                                className="w-full justify-start p-2 h-auto font-medium text-gray-700 hover:bg-gray-100 overflow-hidden"
-                                            >
-                                                {expandedGroups.has(group) ? (
-                                                    <>
-                                                        <ChevronDown className="h-4 w-4 mr-1 shrink-0" />
-                                                        <FolderOpen className="h-4 w-4 mr-2 shrink-0" />
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <ChevronRight className="h-4 w-4 mr-1 shrink-0" />
-                                                        <Folder className="h-4 w-4 mr-2 shrink-0" />
-                                                    </>
-                                                )}
-                                                <span className="truncate capitalize">
-                                                    {group.toLowerCase()} (
-                                                    {objectDefinitions.length})
-                                                </span>
-                                            </Button>
-
-                                            {expandedGroups.has(group) && (
-                                                <div className="ml-6 mt-1 space-y-1">
-                                                    {(
-                                                        objectDefinitions as ObjectDefinition[]
-                                                    ).map(
-                                                        (objectDefinition) => (
-                                                            <Button
-                                                                key={
-                                                                    objectDefinition.name
-                                                                }
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() =>
-                                                                    onSelectObject(
-                                                                        objectDefinition,
-                                                                    )
-                                                                }
-                                                                className={cn(
-                                                                    'w-full justify-start p-2 h-auto text-left hover:bg-gray-100 overflow-hidden',
-                                                                    externalReferenceCode ===
-                                                                        objectDefinition.externalReferenceCode &&
-                                                                        'bg-blue-50 text-blue-900 border border-blue-200',
-                                                                )}
-                                                            >
-                                                                <div className="flex items-center gap-2 w-full min-w-0">
-                                                                    <Table className="h-4 w-4 shrink-0" />
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div className="font-medium truncate">
-                                                                            {
-                                                                                objectDefinition.name
-                                                                            }
-                                                                        </div>
-                                                                        <div className="text-xs text-gray-500 truncate">
-                                                                            {
-                                                                                objectDefinition
-                                                                                    .objectFields
-                                                                                    ?.length
-                                                                            }{' '}
-                                                                            fields,
-                                                                            rows{' '}
-                                                                            {definitionRows[
-                                                                                objectDefinition?.externalReferenceCode ||
-                                                                                    ''
-                                                                            ] ||
-                                                                                '?'}
-                                                                        </div>
-                                                                    </div>
-                                                                    <div
-                                                                        className={cn(
-                                                                            'text-xs px-1.5 py-0.5 rounded shrink-0',
-                                                                            objectDefinition.system
-                                                                                ? 'bg-blue-100 text-blue-700'
-                                                                                : 'bg-gray-100 text-gray-700',
-                                                                        )}
-                                                                    >
-                                                                        {objectDefinition.system
-                                                                            ? 'System'
-                                                                            : 'Custom'}
-                                                                    </div>
-                                                                </div>
-                                                            </Button>
-                                                        ),
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                },
+                        {/* Pick Lists */}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate({ to: '/p/pick-lists' })}
+                            className={cn(
+                                'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
+                                isActive('/pick-lists') &&
+                                    'bg-blue-50 text-blue-900',
                             )}
-                        </>
-                    )}
+                        >
+                            <div className="flex items-center gap-2 w-full min-w-0">
+                                <Table className="h-4 w-4 shrink-0" />
+                                {!collapsed && (
+                                    <span className="font-medium">
+                                        Pick Lists
+                                    </span>
+                                )}
+                            </div>
+                        </Button>
+
+                        {/* Objects Group */}
+                        <div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleGroup('objects')}
+                                className="w-full justify-start p-2 h-auto font-medium text-gray-700 hover:bg-gray-100 overflow-hidden"
+                            >
+                                <Folder className="h-4 w-4 shrink-0" />
+
+                                {!collapsed && (
+                                    <span className="truncate capitalize">
+                                        Objects ({objectDefinitions.length})
+                                    </span>
+                                )}
+                            </Button>
+
+                            {expandedGroups.has('objects') && !collapsed && (
+                                <div className="ml-4 mt-1 space-y-1 border-l pl-2">
+                                    {Object.entries(objectDefinitionGroups).map(
+                                        ([group, definitions]) => (
+                                            <div key={group}>
+                                                <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">
+                                                    {group}
+                                                </div>
+                                                {definitions.map((def) => (
+                                                    <Button
+                                                        key={
+                                                            def.externalReferenceCode
+                                                        }
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            onSelectObject(def)
+                                                        }
+                                                        className={cn(
+                                                            'w-full justify-start p-1.5 h-auto text-left hover:bg-gray-100 text-sm pl-4',
+                                                            externalReferenceCode ===
+                                                                def.externalReferenceCode &&
+                                                                'bg-blue-50 text-blue-900 font-medium',
+                                                        )}
+                                                    >
+                                                        <span className="truncate">
+                                                            {def.name}
+                                                        </span>
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        ),
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Mailing Section */}
+                    <div className="space-y-1">
+                        {!collapsed && (
+                            <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4">
+                                Mailing
+                            </h3>
+                        )}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                                navigate({
+                                    to: '/p/mailing/notification-templates',
+                                })
+                            }
+                            className={cn(
+                                'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
+                                isActive('/mailing/notification-templates') &&
+                                    'bg-blue-50 text-blue-900',
+                            )}
+                        >
+                            <div className="flex items-center gap-2 w-full min-w-0">
+                                <FileText className="h-4 w-4 shrink-0" />
+                                {!collapsed && (
+                                    <span className="font-medium">
+                                        Notification Templates
+                                    </span>
+                                )}
+                            </div>
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                                navigate({
+                                    to: '/p/mailing/notification-queue',
+                                })
+                            }
+                            className={cn(
+                                'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
+                                isActive('/mailing/notification-queue') &&
+                                    'bg-blue-50 text-blue-900',
+                            )}
+                        >
+                            <div className="flex items-center gap-2 w-full min-w-0">
+                                <Activity className="h-4 w-4 shrink-0" />
+                                {!collapsed && (
+                                    <span className="font-medium">
+                                        Notification Queue
+                                    </span>
+                                )}
+                            </div>
+                        </Button>
+                    </div>
+
+                    {/* Site Section */}
+                    <div className="space-y-1">
+                        {!collapsed && (
+                            <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4">
+                                Site
+                            </h3>
+                        )}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate({ to: '/p/documents' })}
+                            className={cn(
+                                'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
+                                isActive('/documents') &&
+                                    'bg-blue-50 text-blue-900',
+                            )}
+                        >
+                            <div className="flex items-center gap-2 w-full min-w-0">
+                                <FileText className="h-4 w-4 shrink-0" />
+                                {!collapsed && (
+                                    <span className="font-medium">
+                                        Documents and Media
+                                    </span>
+                                )}
+                            </div>
+                        </Button>
+                    </div>
+
+                    {/* Query Section */}
+                    <div className="space-y-1">
+                        {!collapsed && (
+                            <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4">
+                                Query
+                            </h3>
+                        )}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate({ to: '/p/query/graphql' })}
+                            className={cn(
+                                'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
+                                isActive('/query/graphql') &&
+                                    'bg-blue-50 text-blue-900',
+                            )}
+                        >
+                            <div className="flex items-center gap-2 w-full min-w-0">
+                                <Activity className="h-4 w-4 shrink-0" />
+                                {!collapsed && (
+                                    <span className="font-medium">
+                                        GraphQL Playground
+                                    </span>
+                                )}
+                            </div>
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate({ to: '/p/query/rest' })}
+                            className={cn(
+                                'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
+                                isActive('/query/rest') &&
+                                    'bg-blue-50 text-blue-900',
+                            )}
+                        >
+                            <div className="flex items-center gap-2 w-full min-w-0">
+                                <Activity className="h-4 w-4 shrink-0" />
+                                {!collapsed && (
+                                    <span className="font-medium">
+                                        Rest Playground
+                                    </span>
+                                )}
+                            </div>
+                        </Button>
+                    </div>
                 </div>
             </ScrollArea>
 
