@@ -63,9 +63,7 @@ const colorOptions = [
     '#FF5722',
 ];
 
-export function EnvironmentSetup({
-    onEnvironmentSelect,
-}: EnvironmentSetupProps) {
+export function EnvironmentSetup() {
     const navigate = useNavigate();
     const { invalidate } = useRouter();
     const [savedEnvironments, setSavedEnvironments] = useState<Environment[]>(
@@ -218,7 +216,6 @@ export function EnvironmentSetup({
         } catch (error) {
             console.error('Failed to connect:', error);
         }
-        onEnvironmentSelect(environmentId);
         navigate({ to: '/p' });
     };
 
@@ -316,7 +313,8 @@ export function EnvironmentSetup({
                                                 <div className="font-medium text-text-primary">
                                                     {env.name}
                                                 </div>
-                                                <div className="text-sm text-text-secondary">
+
+                                                <div className="text-xs text-text-secondary text-wrap truncate">
                                                     {env.host}
                                                 </div>
                                             </div>

@@ -13,6 +13,7 @@ import {
     FileText,
     Activity,
     ChevronDown,
+    Globe,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -129,6 +130,7 @@ export function Sidebar({
                         </h1>
                     </div>
                 )}
+
                 {/* Collapse toggle button */}
                 <button
                     onClick={() => onToggleCollapse()}
@@ -325,28 +327,30 @@ export function Sidebar({
                         </Button>
                     </div>
 
-                    {/* Site Section */}
+                    {/* Global Section */}
                     <div className="space-y-1">
                         {!collapsed && (
-                            <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4">
-                                Site
+                            <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Global
                             </h3>
                         )}
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate({ to: '/p/documents' })}
+                            onClick={() =>
+                                navigate({ to: '/p/virtual-instances' })
+                            }
                             className={cn(
                                 'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
-                                isActive('/documents') &&
+                                isActive('/virtual-instances') &&
                                     'bg-blue-50 text-blue-900',
                             )}
                         >
                             <div className="flex items-center gap-2 w-full min-w-0">
-                                <FileText className="h-4 w-4 shrink-0" />
+                                <Globe className="h-4 w-4 shrink-0" />
                                 {!collapsed && (
                                     <span className="font-medium">
-                                        Documents and Media
+                                        Virtual Instances
                                     </span>
                                 )}
                             </div>
