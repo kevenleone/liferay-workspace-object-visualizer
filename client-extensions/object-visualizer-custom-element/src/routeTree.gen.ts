@@ -10,12 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as EnvironmentsRouteImport } from './routes/environments'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as PRouteRouteImport } from './routes/p/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PIndexRouteImport } from './routes/p/index'
+import { Route as PVirtualInstancesRouteImport } from './routes/p/virtual-instances'
 import { Route as PPickListsRouteImport } from './routes/p/pick-lists'
-import { Route as PDocumentsRouteImport } from './routes/p/documents'
 import { Route as PExternalReferenceCodeRouteRouteImport } from './routes/p/$externalReferenceCode/route'
 import { Route as PExternalReferenceCodeIndexRouteImport } from './routes/p/$externalReferenceCode/index'
 import { Route as PQueryRestRouteImport } from './routes/p/query/rest'
@@ -28,11 +27,6 @@ import { Route as PExternalReferenceCodeQueryRouteImport } from './routes/p/$ext
 const EnvironmentsRoute = EnvironmentsRouteImport.update({
   id: '/environments',
   path: '/environments',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PRouteRoute = PRouteRouteImport.update({
@@ -50,14 +44,14 @@ const PIndexRoute = PIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PRouteRoute,
 } as any)
+const PVirtualInstancesRoute = PVirtualInstancesRouteImport.update({
+  id: '/virtual-instances',
+  path: '/virtual-instances',
+  getParentRoute: () => PRouteRoute,
+} as any)
 const PPickListsRoute = PPickListsRouteImport.update({
   id: '/pick-lists',
   path: '/pick-lists',
-  getParentRoute: () => PRouteRoute,
-} as any)
-const PDocumentsRoute = PDocumentsRouteImport.update({
-  id: '/documents',
-  path: '/documents',
   getParentRoute: () => PRouteRoute,
 } as any)
 const PExternalReferenceCodeRouteRoute =
@@ -110,11 +104,10 @@ const PExternalReferenceCodeQueryRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/p': typeof PRouteRouteWithChildren
-  '/about': typeof AboutRoute
   '/environments': typeof EnvironmentsRoute
   '/p/$externalReferenceCode': typeof PExternalReferenceCodeRouteRouteWithChildren
-  '/p/documents': typeof PDocumentsRoute
   '/p/pick-lists': typeof PPickListsRoute
+  '/p/virtual-instances': typeof PVirtualInstancesRoute
   '/p/': typeof PIndexRoute
   '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
   '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
@@ -126,10 +119,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/environments': typeof EnvironmentsRoute
-  '/p/documents': typeof PDocumentsRoute
   '/p/pick-lists': typeof PPickListsRoute
+  '/p/virtual-instances': typeof PVirtualInstancesRoute
   '/p': typeof PIndexRoute
   '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
   '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
@@ -143,11 +135,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/p': typeof PRouteRouteWithChildren
-  '/about': typeof AboutRoute
   '/environments': typeof EnvironmentsRoute
   '/p/$externalReferenceCode': typeof PExternalReferenceCodeRouteRouteWithChildren
-  '/p/documents': typeof PDocumentsRoute
   '/p/pick-lists': typeof PPickListsRoute
+  '/p/virtual-instances': typeof PVirtualInstancesRoute
   '/p/': typeof PIndexRoute
   '/p/$externalReferenceCode/query': typeof PExternalReferenceCodeQueryRoute
   '/p/$externalReferenceCode/schema': typeof PExternalReferenceCodeSchemaRoute
@@ -162,11 +153,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/p'
-    | '/about'
     | '/environments'
     | '/p/$externalReferenceCode'
-    | '/p/documents'
     | '/p/pick-lists'
+    | '/p/virtual-instances'
     | '/p/'
     | '/p/$externalReferenceCode/query'
     | '/p/$externalReferenceCode/schema'
@@ -178,10 +168,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/about'
     | '/environments'
-    | '/p/documents'
     | '/p/pick-lists'
+    | '/p/virtual-instances'
     | '/p'
     | '/p/$externalReferenceCode/query'
     | '/p/$externalReferenceCode/schema'
@@ -194,11 +183,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/p'
-    | '/about'
     | '/environments'
     | '/p/$externalReferenceCode'
-    | '/p/documents'
     | '/p/pick-lists'
+    | '/p/virtual-instances'
     | '/p/'
     | '/p/$externalReferenceCode/query'
     | '/p/$externalReferenceCode/schema'
@@ -212,7 +200,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PRouteRoute: typeof PRouteRouteWithChildren
-  AboutRoute: typeof AboutRoute
   EnvironmentsRoute: typeof EnvironmentsRoute
 }
 
@@ -223,13 +210,6 @@ declare module '@tanstack/react-router' {
       path: '/environments'
       fullPath: '/environments'
       preLoaderRoute: typeof EnvironmentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/p': {
@@ -253,18 +233,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PIndexRouteImport
       parentRoute: typeof PRouteRoute
     }
+    '/p/virtual-instances': {
+      id: '/p/virtual-instances'
+      path: '/virtual-instances'
+      fullPath: '/p/virtual-instances'
+      preLoaderRoute: typeof PVirtualInstancesRouteImport
+      parentRoute: typeof PRouteRoute
+    }
     '/p/pick-lists': {
       id: '/p/pick-lists'
       path: '/pick-lists'
       fullPath: '/p/pick-lists'
       preLoaderRoute: typeof PPickListsRouteImport
-      parentRoute: typeof PRouteRoute
-    }
-    '/p/documents': {
-      id: '/p/documents'
-      path: '/documents'
-      fullPath: '/p/documents'
-      preLoaderRoute: typeof PDocumentsRouteImport
       parentRoute: typeof PRouteRoute
     }
     '/p/$externalReferenceCode': {
@@ -346,8 +326,8 @@ const PExternalReferenceCodeRouteRouteWithChildren =
 
 interface PRouteRouteChildren {
   PExternalReferenceCodeRouteRoute: typeof PExternalReferenceCodeRouteRouteWithChildren
-  PDocumentsRoute: typeof PDocumentsRoute
   PPickListsRoute: typeof PPickListsRoute
+  PVirtualInstancesRoute: typeof PVirtualInstancesRoute
   PIndexRoute: typeof PIndexRoute
   PMailingNotificationQueueRoute: typeof PMailingNotificationQueueRoute
   PMailingNotificationTemplatesRoute: typeof PMailingNotificationTemplatesRoute
@@ -358,8 +338,8 @@ interface PRouteRouteChildren {
 const PRouteRouteChildren: PRouteRouteChildren = {
   PExternalReferenceCodeRouteRoute:
     PExternalReferenceCodeRouteRouteWithChildren,
-  PDocumentsRoute: PDocumentsRoute,
   PPickListsRoute: PPickListsRoute,
+  PVirtualInstancesRoute: PVirtualInstancesRoute,
   PIndexRoute: PIndexRoute,
   PMailingNotificationQueueRoute: PMailingNotificationQueueRoute,
   PMailingNotificationTemplatesRoute: PMailingNotificationTemplatesRoute,
@@ -373,7 +353,6 @@ const PRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PRouteRoute: PRouteRouteWithChildren,
-  AboutRoute: AboutRoute,
   EnvironmentsRoute: EnvironmentsRoute,
 }
 export const routeTree = rootRouteImport
