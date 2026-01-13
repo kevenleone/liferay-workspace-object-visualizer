@@ -2,9 +2,5 @@ import { EnvironmentSetup } from '@/components/environment-setup';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/environments')({
-    component: RouteComponent,
+    component: EnvironmentSetup,
 });
-
-function RouteComponent() {
-    return <EnvironmentSetup onEnvironmentSelect={() => null} />;
-}

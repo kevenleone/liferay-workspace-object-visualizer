@@ -209,6 +209,7 @@ function RestPage() {
                         <SelectTrigger className="w-24 bg-white h-9">
                             <SelectValue />
                         </SelectTrigger>
+
                         <SelectContent>
                             <SelectItem value="GET">GET</SelectItem>
                             <SelectItem value="POST">POST</SelectItem>
@@ -217,6 +218,7 @@ function RestPage() {
                             <SelectItem value="DELETE">DELETE</SelectItem>
                         </SelectContent>
                     </Select>
+
                     <div className="flex-1 flex items-center px-3 h-9 bg-white border rounded-md font-mono text-sm text-gray-400 overflow-hidden">
                         <Globe className="h-4 w-4 mr-2 shrink-0" />
                         <span className="truncate">
@@ -251,6 +253,7 @@ function RestPage() {
                         value={queryName}
                         onChange={(e) => setQueryName(e.target.value)}
                     />
+
                     <Button
                         variant="outline"
                         size="sm"
@@ -279,6 +282,7 @@ function RestPage() {
                             />
                         </div>
                     )}
+
                     <div className="flex-1 flex flex-col">
                         <div className="border-b p-2 bg-gray-100 text-xs font-semibold text-gray-500 uppercase flex justify-between items-center">
                             <span>Response Body</span>
@@ -301,18 +305,21 @@ function RestPage() {
                                 </Button>
                             )}
                         </div>
-                        <div className="flex-1 bg-gray-900 text-green-400 p-4 font-mono text-xs overflow-auto">
-                            {rawResponse ? (
-                                <pre className="whitespace-pre-wrap break-all">
-                                    {JSON.stringify(rawResponse, null, 2)}
-                                </pre>
-                            ) : (
-                                <div className="text-gray-500 italic">
-                                    Execute a request to see the response
-                                    here...
-                                </div>
-                            )}
-                        </div>
+
+                        <ScrollArea className="h-screen overflow-y-hidden">
+                            <div className="flex-1 bg-gray-900 text-green-400 p-4 font-mono text-xs overflow-auto">
+                                {rawResponse ? (
+                                    <pre className="whitespace-pre-wrap break-all">
+                                        {JSON.stringify(rawResponse, null, 2)}
+                                    </pre>
+                                ) : (
+                                    <div className="text-gray-500 italic">
+                                        Execute a request to see the response
+                                        here...
+                                    </div>
+                                )}
+                            </div>
+                        </ScrollArea>
                     </div>
                 </div>
 

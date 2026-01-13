@@ -18,12 +18,14 @@ interface GenericDataTableProps<T> {
     title: string;
     data: T[];
     columns: Column<T>[];
+    loading?: boolean;
 }
 
 export function GenericDataTable<T>({
     title,
     data,
     columns,
+    loading,
 }: GenericDataTableProps<T>) {
     return (
         <Card className="h-full border-0 shadow-none">
@@ -58,15 +60,26 @@ export function GenericDataTable<T>({
                                     ))}
                                 </TableRow>
                             ))}
-                            {data.length === 0 && (
+                            {loading ? (
                                 <TableRow>
                                     <TableCell
                                         colSpan={columns.length}
                                         className="h-24 text-center"
                                     >
-                                        No results.
+                                        Loading...
                                     </TableCell>
                                 </TableRow>
+                            ) : (
+                                data.length === 0 && (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={columns.length}
+                                            className="h-24 text-center"
+                                        >
+                                            No results.
+                                        </TableCell>
+                                    </TableRow>
+                                )
                             )}
                         </TableBody>
                     </Table>

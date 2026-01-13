@@ -18,7 +18,6 @@ export const PICK_LISTS_DATA = [
                 system: false,
                 type: '',
             },
-
             {
                 dateCreated: '2025-12-26T02:27:04Z',
                 dateModified: '2026-01-06T15:00:03Z',
@@ -153,31 +152,5 @@ export const NOTIFICATION_QUEUE_DATA = [
         triggerBy: 'Added via API',
         type: 'email',
         typeLabel: 'Email',
-    },
-];
-
-export const DOCUMENTS_DATA = [
-    {
-        id: '1',
-        title: 'Marketing Assets',
-        type: 'folder',
-        size: null,
-        dateModified: '2025-01-15T10:00:00Z',
-    },
-    {
-        id: '2',
-        title: 'Q4 Report.pdf',
-        type: 'pdf',
-        size: '2.4 MB',
-        dateModified: '2025-01-14T14:30:00Z',
-        thumbnail: 'https://placehold.co/100x140/e2e8f0/475569?text=PDF',
-    },
-    {
-        id: '3',
-        title: 'Banner.jpg',
-        type: 'image',
-        size: '1.2 MB',
-        dateModified: '2025-01-12T09:15:00Z',
-        thumbnail: 'https://placehold.co/200x150/e2e8f0/475569?text=IMG',
     },
 ];
