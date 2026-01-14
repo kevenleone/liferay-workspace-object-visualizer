@@ -4,11 +4,7 @@ import { createRootRoute, Outlet } from '@tanstack/react-router';
 const RootLayout = () => {
     useScrollUnlocked();
 
-    return (
-        <div id="main-outlet">
-            <Outlet />
-        </div>
-    );
+    return <Outlet />;
 };
 
 export const Route = createRootRoute({
