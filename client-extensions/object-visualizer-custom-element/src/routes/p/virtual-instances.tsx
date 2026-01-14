@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import {
+    PagePortalInstance,
     PortalInstance,
     getPortalInstancesPage,
     postPortalInstance,
@@ -19,38 +20,33 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Database, Plus } from 'lucide-react';
+import { liferayClient } from '@/lib/headless-client';
 
 export const Route = createFileRoute('/p/virtual-instances')({
     component: VirtualInstancesPage,
+    loader: async () => {
+        const { data, error } = await getPortalInstancesPage({
+            client: liferayClient,
+        });
+
+        if (error) {
+            return null;
+        }
+
+        return data as PagePortalInstance;
+    },
 });
 
 function VirtualInstancesPage() {
-    const [instances, setInstances] = useState<PortalInstance[]>([]);
-    const [loading, setLoading] = useState(true);
+    const portalInstancesPage = Route.useLoaderData();
+
+    const instances = portalInstancesPage?.items ?? [];
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [newPortalInstance, setNewPortalInstance] = useState<PortalInstance>({
-        portalInstanceId: '',
         domain: '',
+        portalInstanceId: '',
         virtualHost: '',
     });
-
-    const fetchInstances = useCallback(async () => {
-        setLoading(true);
-        try {
-            const response = await getPortalInstancesPage();
-            if (response.data) {
-                setInstances(response.data.items || []);
-            }
-        } catch (error) {
-            console.error('Error fetching portal instances:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchInstances();
-    }, [fetchInstances]);
 
     const handleCreateInstance = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,13 +54,15 @@ function VirtualInstancesPage() {
             await postPortalInstance({
                 body: newPortalInstance,
             });
+
             setIsCreateDialogOpen(false);
             setNewPortalInstance({
                 portalInstanceId: '',
                 domain: '',
                 virtualHost: '',
             });
-            fetchInstances();
+
+            // invalidate cache
         } catch (error) {
             console.error('Error creating portal instance:', error);
         }
@@ -130,7 +128,6 @@ function VirtualInstancesPage() {
                 title="Virtual Instances"
                 data={instances}
                 columns={columns}
-                loading={loading}
             />
 
             <Dialog

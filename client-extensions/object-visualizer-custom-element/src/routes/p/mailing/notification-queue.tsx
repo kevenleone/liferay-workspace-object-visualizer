@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
+import { getNotificationQueueEntriesPage } from 'liferay-headless-rest-client/notification-v1.0';
+
 import { GenericDataTable } from '@/components/generic-data-table';
-import { NOTIFICATION_QUEUE_DATA } from '@/lib/mock-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,12 +11,27 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { liferayClient } from '@/lib/headless-client';
 
 export const Route = createFileRoute('/p/mailing/notification-queue')({
     component: NotificationQueuePage,
+    loader: async () => {
+        const { data, error } = await getNotificationQueueEntriesPage({
+            client: liferayClient,
+        });
+
+        if (error) {
+            return null;
+        }
+
+        return data;
+    },
 });
 
 function NotificationQueuePage() {
+    const notificationQueueEntriesPage = Route.useLoaderData();
+    const notificationQueueEntries = notificationQueueEntriesPage?.items ?? [];
+
     const [selectedItem, setSelectedItem] = useState<any>(null);
 
     const columns = [
@@ -66,7 +82,7 @@ function NotificationQueuePage() {
     ];
 
     return (
-        <div className="p-6 h-full overflow-auto bg-gray-50/50">
+        <div className="p-6 overflow-auto bg-gray-50/50">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold font-montserrat text-gray-900">
                     Notification Queue
@@ -77,7 +93,7 @@ function NotificationQueuePage() {
             </div>
             <GenericDataTable
                 title="Queue Entries"
-                data={NOTIFICATION_QUEUE_DATA}
+                data={notificationQueueEntries}
                 columns={columns}
             />
 

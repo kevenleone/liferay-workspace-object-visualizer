@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { GenericDataTable } from '@/components/generic-data-table';
-import { PICK_LISTS_DATA } from '@/lib/mock-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getListTypeDefinitionsPage } from 'liferay-headless-rest-client/headless-admin-list-type-v1.0';
 import {
     Dialog,
     DialogContent,
@@ -19,61 +19,81 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { liferayClient } from '@/lib/headless-client';
 
 export const Route = createFileRoute('/p/pick-lists')({
     component: PickListsPage,
+    loader: async () => {
+        const { data, error } = await getListTypeDefinitionsPage({
+            client: liferayClient,
+            query: { sort: 'name:asc' },
+        });
+
+        if (error) {
+            return null;
+        }
+
+        return data;
+    },
 });
 
 function PickListsPage() {
+    const listTypeDefinitionsPage = Route.useLoaderData();
+
+    const items = listTypeDefinitionsPage?.items ?? [];
+
     const [selectedList, setSelectedList] = useState<any>(null);
 
-    const columns = [
-        {
-            header: 'ID',
-            accessorKey: 'id' as const,
-        },
-        {
-            header: 'Name',
-            accessorKey: 'name' as const,
-            cell: (item: any) => (
-                <span className="font-medium">{item.name}</span>
-            ),
-        },
-        {
-            header: 'External Reference Code',
-            accessorKey: 'externalReferenceCode' as const,
-            cell: (item: any) => (
-                <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">
-                    {item.externalReferenceCode}
-                </code>
-            ),
-        },
-        {
-            header: 'System',
-            accessorKey: 'system' as const,
-            cell: (item: any) => (
-                <Badge variant={item.system ? 'default' : 'secondary'}>
-                    {item.system ? 'System' : 'Custom'}
-                </Badge>
-            ),
-        },
-        {
-            header: 'Actions',
-            id: 'actions',
-            cell: (item: any) => (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedList(item)}
-                >
-                    View Entries
-                </Button>
-            ),
-        },
-    ];
+    const columns = useMemo(
+        () => [
+            {
+                header: 'ID',
+                accessorKey: 'id' as const,
+            },
+            {
+                header: 'Name',
+                accessorKey: 'name' as const,
+                cell: (item: any) => (
+                    <span className="font-medium">{item.name}</span>
+                ),
+            },
+            {
+                header: 'External Reference Code',
+                accessorKey: 'externalReferenceCode' as const,
+                cell: (item: any) => (
+                    <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">
+                        {item.externalReferenceCode}
+                    </code>
+                ),
+            },
+            {
+                header: 'System',
+                accessorKey: 'system' as const,
+                cell: (item: any) => (
+                    <Badge variant={item.system ? 'default' : 'secondary'}>
+                        {item.system ? 'System' : 'Custom'}
+                    </Badge>
+                ),
+            },
+            {
+                header: 'Actions',
+                id: 'actions',
+                cell: (item: any) => (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedList(item)}
+                    >
+                        View Entries
+                    </Button>
+                ),
+            },
+        ],
+        [setSelectedList],
+    );
 
     return (
-        <div className="p-6 h-full overflow-auto bg-gray-50/50">
+        <div className="p-6 overflow-auto bg-gray-50/50">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold font-montserrat text-gray-900">
                     Pick Lists
@@ -85,7 +105,7 @@ function PickListsPage() {
 
             <GenericDataTable
                 title="Pick Lists"
-                data={PICK_LISTS_DATA}
+                data={items}
                 columns={columns}
             />
 
