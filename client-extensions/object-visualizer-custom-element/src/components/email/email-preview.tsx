@@ -1,0 +1,179 @@
+import { NotificationTemplate } from 'liferay-headless-rest-client/notification-v1.0';
+import { Mail, Clock, Users, Maximize2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useVariables } from '@/hooks/use-variables';
+import {
+    Dialog,
+    DialogTrigger,
+    DialogContent,
+    DialogTitle,
+    DialogHeader,
+} from '../ui/dialog';
+
+interface EmailPreviewProps {
+    notificationTemplate: Required<NotificationTemplate>;
+}
+
+export const EmailPreview: React.FC<EmailPreviewProps> = ({
+    notificationTemplate,
+}) => {
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const { replaceVariables } = useVariables();
+
+    const { processedBody, processedSubject, processedRecipients } =
+        useMemo(() => {
+            return {
+                processedBody: replaceVariables(
+                    notificationTemplate.body.en_US,
+                ),
+                processedRecipients: notificationTemplate.recipients.map(
+                    (recipient: any) => ({
+                        ...recipient,
+                        to: { en_US: replaceVariables(recipient.to!.en_US) },
+                    }),
+                ),
+                processedSubject: replaceVariables(
+                    notificationTemplate.subject.en_US,
+                ),
+            };
+        }, [
+            notificationTemplate.body.en_US,
+            notificationTemplate.recipients,
+            notificationTemplate.subject.en_US,
+            replaceVariables,
+        ]);
+
+    const PreviewContent = () => (
+        <>
+            <div className="bg-muted p-4 rounded-lg border">
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">
+                            From:
+                        </span>
+                        <span className="text-sm text-foreground">
+                            noreply@company.com
+                        </span>
+                    </div>
+                    <div className="flex items-start justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">
+                            To:
+                        </span>
+                        <div className="text-right">
+                            {processedRecipients.map(
+                                ({ from, fromName }: any, index) => (
+                                    <span key={index}>
+                                        <strong>{fromName.en_US}</strong>{' '}
+                                        {`<${from}>`}
+                                    </span>
+                                ),
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">
+                            Subject:
+                        </span>
+                        <span
+                            className="text-sm text-foreground font-medium"
+                            dangerouslySetInnerHTML={{
+                                __html: processedSubject,
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-card border rounded-lg">
+                <div className="p-6">
+                    <div
+                        className="prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: processedBody }}
+                        style={{
+                            fontFamily: 'system-ui, -apple-system, sans-serif',
+                            lineHeight: '1.6',
+                        }}
+                    />
+                </div>
+
+                <div className="border-t bg-muted p-4 text-center">
+                    <p className="text-xs text-muted-foreground">
+                        This is an automated notification from your system.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        Please do not reply to this email.
+                    </p>
+                </div>
+            </div>
+        </>
+    );
+
+    return (
+        <Card className="h-full">
+            <CardHeader>
+                <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                        <Mail className="w-5 h-5 text-primary" />
+                        Email Preview
+                    </CardTitle>
+
+                    <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                                <Maximize2 className="w-4 h-4 mr-2" />
+                                Fullscreen
+                            </Button>
+                        </DialogTrigger>
+
+                        <DialogContent
+                            className="w-5xl h-[90vh] scroll-smooth-touch overflow-y-auto mt-6"
+                            smallSized={false}
+                        >
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                    <Mail className="w-5 h-5 text-primary" />
+                                    Email Preview (Fullscreen)
+                                </DialogTitle>
+                            </DialogHeader>
+
+                            <div className="space-y-4 mt-4">
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-1">
+                                        <Users className="w-4 h-4" />
+                                        {processedRecipients.length} recipients
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Clock className="w-4 h-4" />
+                                        {new Date().toLocaleDateString()}
+                                    </div>
+                                </div>
+
+                                <PreviewContent />
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                        <Users className="w-4 h-4" />
+                        {processedRecipients.length} recipients
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+
+                        {new Date().toLocaleDateString()}
+                    </div>
+                </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+                <PreviewContent />
+            </CardContent>
+        </Card>
+    );
+};
