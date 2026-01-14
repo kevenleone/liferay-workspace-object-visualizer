@@ -1,8 +1,8 @@
 [package]
-name = "app"
+name = "LiferayStudio"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "A Liferay Application wrapper for your remote instances"
+authors = ["Keven Leone <keven.santos.sz@gmail.com>"]
 license = ""
 repository = ""
 edition = "2021"
