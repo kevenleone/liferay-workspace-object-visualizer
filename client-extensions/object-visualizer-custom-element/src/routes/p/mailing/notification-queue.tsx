@@ -91,6 +91,7 @@ function NotificationQueuePage() {
                     View and manage queued notifications.
                 </p>
             </div>
+
             <GenericDataTable
                 title="Queue Entries"
                 data={notificationQueueEntries}

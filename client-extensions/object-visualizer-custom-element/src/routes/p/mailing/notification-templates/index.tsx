@@ -75,10 +75,21 @@ function NotificationTemplatesPage() {
     };
 
     return (
-        <TemplatesList
-            templates={pageNotificationTemplate.items ?? []}
-            onDeleteTemplate={handleDeleteTemplate}
-            onDuplicateTemplate={handleDuplicateTemplate}
-        />
+        <div className="p-6 overflow-auto bg-gray-50/50">
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold font-montserrat text-gray-900">
+                    Notification Templates
+                </h1>
+                <p className="text-muted-foreground">
+                    Manage and create notification templates.
+                </p>
+            </div>
+
+            <TemplatesList
+                templates={pageNotificationTemplate.items ?? []}
+                onDeleteTemplate={handleDeleteTemplate}
+                onDuplicateTemplate={handleDuplicateTemplate}
+            />
+        </div>
     );
 }

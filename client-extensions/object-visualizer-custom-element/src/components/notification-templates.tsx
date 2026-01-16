@@ -3,7 +3,7 @@ import { Search, Edit, Trash2, Copy } from 'lucide-react';
 import { NotificationTemplate } from 'liferay-headless-rest-client/notification-v1.0';
 import { useNavigate } from '@tanstack/react-router';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -68,12 +68,8 @@ export const TemplatesList: React.FC<TemplatesListProps> = ({
     return (
         <Card className="h-full">
             <CardHeader>
-                <div className="flex items-center justify-between">
-                    <CardTitle>Email Templates</CardTitle>
-                </div>
-
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Search className="absolute left-3 top-[10px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                         placeholder="Search templates..."
                         value={searchTerm}
