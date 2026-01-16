@@ -90,13 +90,18 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
 
             <div className="bg-card border rounded-lg">
                 <div className="p-6">
-                    <div
+                    <iframe
+                        srcDoc={`<html><head><style>body { margin: 0; } img, table { max-width: 100%; height: auto; } .variable-highlight { background-color: rgba(88, 28, 135, 0.5); color: inherit; padding: 0.25rem; border-radius: 0.25rem; font-weight: 600; }</style></head><body>${processedBody}<script>window.addEventListener('load', () => { const body = document.body; const scale = Math.min(1, body.clientWidth / body.scrollWidth); if (scale < 1) { body.style.transform = \`scale(\${scale})\`; body.style.transformOrigin = 'top left'; body.style.width = \`\${100 / scale}%\`; } });</script></body></html>`}
                         className="prose prose-sm max-w-none"
-                        dangerouslySetInnerHTML={{ __html: processedBody }}
+                        sandbox="allow-scripts allow-same-origin"
                         style={{
+                            width: '100%',
+                            height: '600px',
+                            border: 'none',
                             fontFamily: 'system-ui, -apple-system, sans-serif',
                             lineHeight: '1.6',
                         }}
+                        title="Email Preview"
                     />
                 </div>
 
@@ -129,10 +134,7 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
                             </Button>
                         </DialogTrigger>
 
-                        <DialogContent
-                            className="w-5xl h-[90vh] scroll-smooth-touch overflow-y-auto mt-6"
-                            smallSized={false}
-                        >
+                        <DialogContent className="w-5xl h-[90vh] scroll-smooth-touch overflow-y-auto mt-6">
                             <DialogHeader>
                                 <DialogTitle className="flex items-center gap-2">
                                     <Mail className="w-5 h-5 text-primary" />

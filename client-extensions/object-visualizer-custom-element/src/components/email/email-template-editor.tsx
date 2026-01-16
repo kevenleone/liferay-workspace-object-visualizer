@@ -17,11 +17,10 @@ import {
     patchNotificationTemplate,
     postNotificationQueueEntry,
 } from 'liferay-headless-rest-client/notification-v1.0';
-import { useNavigate } from '@tanstack/react-router';
+
 import { useVariables } from '@/hooks/use-variables';
 import { Liferay } from '@/lib/liferay';
 import { liferayClient } from '@/lib/headless-client';
-import { ScrollArea } from '@radix-ui/react-scroll-area';
 
 type EmailTemplateEditorProps = {
     notificationTemplate: Required<NotificationTemplate>;
@@ -35,7 +34,6 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
     const [notificationTemplate, setNotificationTemplate] = useState(template);
     const { replaceVariables } = useVariables();
 
-    const navigate = useNavigate();
     const { toast } = useToast();
 
     const handleSave = async () => {
@@ -118,7 +116,7 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
     };
 
     return (
-        <ScrollArea className="max-w-7xl mx-auto space-y-6 h-screen">
+        <div className="mx-auto space-y-6 h-full px-8 overflow-auto">
             <div>
                 <div className="flex mb-4 items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -126,7 +124,7 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                             className="text-gray-600 hover:text-gray-800"
                             size="sm"
                             variant="ghost"
-                            onClick={() => navigate({ to: '/' })}
+                            onClick={() => window.history.back()}
                         >
                             <ArrowLeft className="w-4 h-4 mr-1" />
                             Back
@@ -272,7 +270,7 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                     <VariableSelector />
                 </div>
             </div>
-        </ScrollArea>
+        </div>
     );
 };
 
