@@ -176,3 +176,9 @@
 [data-scroll-locked][data-scroll-locked] {
     overflow: scroll !important;
 }
+
+.variable-highlight {
+    @apply bg-purple-800/50 text-foreground px-1 rounded;
+
+    font-weight: 600;
+}
