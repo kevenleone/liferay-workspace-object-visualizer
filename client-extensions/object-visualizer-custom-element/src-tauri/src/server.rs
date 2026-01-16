@@ -81,8 +81,7 @@ pub async fn start_server() {
         .layer(CorsLayer::permissive())
         .with_state(state);
 
-    // Using port 3001 to avoid conflict with default frontend ports
-    let addr = "127.0.0.1:3001";
+    let addr = "127.0.0.1:2027";
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     println!("Server listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();

@@ -1,5 +1,5 @@
 const tauriProxyBaseURL =
-    import.meta.env.TAURI_ENV_PROXY_BASE_URL || 'http://localhost:3001';
+    import.meta.env.TAURI_ENV_PROXY_BASE_URL || 'http://localhost:2027';
 
 function joinUrl(base: string, path: string) {
     const b = base.replace(/\/+$/, '');

@@ -6,7 +6,7 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 const host = process.env.TAURI_DEV_HOST;
 
-const devPort = 5173;
+const devPort = 2026;
 
 export default defineConfig({
     build: {
@@ -52,10 +52,13 @@ export default defineConfig({
         hmr: host
             ? {
                   protocol: 'ws',
+                  overlay: false,
                   host,
                   port: 1421,
               }
-            : undefined,
+            : {
+                  overlay: false,
+              },
 
         watch: {
             ignored: ['**/src-tauri/**'],

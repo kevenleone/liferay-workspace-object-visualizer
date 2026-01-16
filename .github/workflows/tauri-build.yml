@@ -99,13 +99,13 @@ jobs:
       - name: Build frontend
         working-directory: client-extensions/object-visualizer-custom-element
         env:
-          TAURI_ENV_PROXY_BASE_URL: "http://localhost:3001"
+          TAURI_ENV_PROXY_BASE_URL: "http://localhost:2027"
         run: bun run build
 
       - name: Build Tauri app
         working-directory: client-extensions/object-visualizer-custom-element
         env:
-          TAURI_ENV_PROXY_BASE_URL: "http://localhost:3001"
+          TAURI_ENV_PROXY_BASE_URL: "http://localhost:2027"
           TAURI_BUILD: "true"
         run: bun run tauri build
 

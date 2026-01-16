@@ -6,7 +6,7 @@ COPY package*.json ./
 RUN bun install
 COPY . .
 EXPOSE 5173
-ENV TAURI_ENV_PROXY_BASE_URL=http://host.docker.internal:3001
+ENV TAURI_ENV_PROXY_BASE_URL=http://host.docker.internal:2027
 ENV TAURI_DEV_HOST=0.0.0.0
 ENV CHOKIDAR_USEPOLLING=1
 ENV WATCHPACK_POLLING=true
@@ -16,7 +16,7 @@ FROM base AS builder
 COPY package*.json ./
 RUN bun install
 COPY . .
-ARG TAURI_ENV_PROXY_BASE_URL=http://localhost:3001
+ARG TAURI_ENV_PROXY_BASE_URL=http://localhost:2027
 ENV TAURI_ENV_PROXY_BASE_URL=${TAURI_ENV_PROXY_BASE_URL}
 ENV TAURI_BUILD=true
 RUN bun run build
