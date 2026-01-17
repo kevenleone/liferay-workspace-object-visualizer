@@ -29,3 +29,5 @@ test-results
 pb_data
 pb_migrations
 ideas
+
+package-lock.json

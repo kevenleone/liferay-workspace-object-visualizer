@@ -39,6 +39,15 @@ export default defineConfig({
                 : `/o/object-visualizer-custom-element/${filename}`;
         },
     },
+    plugins: [
+        tanstackRouter({
+            target: 'react',
+            autoCodeSplitting: true,
+        }),
+        react(),
+        tailwindcss(),
+        splitVendorChunkPlugin(),
+    ],
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
@@ -64,13 +73,10 @@ export default defineConfig({
             ignored: ['**/src-tauri/**'],
         },
     },
-    plugins: [
-        tanstackRouter({
-            target: 'react',
-            autoCodeSplitting: true,
-        }),
-        react(),
-        tailwindcss(),
-        splitVendorChunkPlugin(),
-    ],
+
+    test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: './src/test-setup.ts',
+    },
 });
