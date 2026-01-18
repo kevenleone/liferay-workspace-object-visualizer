@@ -12,7 +12,8 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { liferayClient } from '@/lib/headless-client';
-import { JsonViewer } from '@/components/ui/json-viewer';
+import { EmailRender } from '@/components/email/email-render';
+import { Mail } from 'lucide-react';
 
 export const Route = createFileRoute('/p/mailing/notification-queue')({
     component: NotificationQueuePage,
@@ -29,11 +30,113 @@ export const Route = createFileRoute('/p/mailing/notification-queue')({
     },
 });
 
+function EmailPreviewContent({
+    notificationQueue,
+}: {
+    notificationQueue: any;
+}) {
+    return (
+        <>
+            <div className="bg-muted p-4 rounded-lg border">
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">
+                            From:
+                        </span>
+                        <span className="text-sm text-foreground font-medium">
+                            {notificationQueue.fromName}
+                        </span>
+                    </div>
+                    <div className="flex items-start justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">
+                            To:
+                        </span>
+                        <div className="text-right">
+                            <span className="text-sm text-foreground font-medium">
+                                {notificationQueue.recipientsSummary}
+                            </span>
+                        </div>
+                    </div>
+                    {notificationQueue.recipients.some((r: any) => r.cc) && (
+                        <div className="flex items-start justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                Cc:
+                            </span>
+                            <div className="text-right">
+                                {notificationQueue.recipients
+                                    .filter((r: any) => r.cc)
+                                    .map((r: any, index: number) => (
+                                        <span
+                                            key={index}
+                                            className="text-sm text-foreground font-medium"
+                                        >
+                                            {r.cc}
+                                            {index <
+                                                notificationQueue.recipients.filter(
+                                                    (r: any) => r.cc,
+                                                ).length -
+                                                    1 && ', '}
+                                        </span>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
+                    {notificationQueue.recipients.some((r: any) => r.bcc) && (
+                        <div className="flex items-start justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                Bcc:
+                            </span>
+                            <div className="text-right">
+                                {notificationQueue.recipients
+                                    .filter((r: any) => r.bcc)
+                                    .map((r: any, index: number) => (
+                                        <span
+                                            key={index}
+                                            className="text-sm text-foreground font-medium"
+                                        >
+                                            {r.bcc}
+                                            {index <
+                                                notificationQueue.recipients.filter(
+                                                    (r: any) => r.bcc,
+                                                ).length -
+                                                    1 && ', '}
+                                        </span>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">
+                            Subject:
+                        </span>
+                        <span className="text-sm text-foreground font-medium">
+                            {notificationQueue.subject}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div className="bg-card border rounded-lg">
+                <div className="p-6">
+                    <EmailRender>{notificationQueue.body}</EmailRender>
+                </div>
+                <div className="border-t bg-muted p-4 text-center">
+                    <p className="text-xs text-muted-foreground">
+                        This is an automated notification from your system.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        Please do not reply to this email.
+                    </p>
+                </div>
+            </div>
+        </>
+    );
+}
+
 function NotificationQueuePage() {
     const notificationQueueEntriesPage = Route.useLoaderData();
     const notificationQueueEntries = notificationQueueEntriesPage?.items ?? [];
 
-    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [notificationQueue, setNotificationQueue] = useState<any>(null);
 
     const columns = [
         {
@@ -74,9 +177,9 @@ function NotificationQueuePage() {
                 <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedItem(item)}
+                    onClick={() => setNotificationQueue(item)}
                 >
-                    View Details
+                    Preview Email
                 </Button>
             ),
         },
@@ -100,67 +203,23 @@ function NotificationQueuePage() {
             />
 
             <Dialog
-                open={!!selectedItem}
-                onOpenChange={(open) => !open && setSelectedItem(null)}
+                open={!!notificationQueue}
+                onOpenChange={(open) => !open && setNotificationQueue(null)}
             >
-                <DialogContent className="max-w-4xl">
+                <DialogContent className="w-5xl h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Notification Details</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Mail className="w-5 h-5 text-primary" />
+                            Email Preview
+                        </DialogTitle>
                     </DialogHeader>
-
-                    {selectedItem && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <div className="text-sm font-medium text-muted-foreground">
-                                        Subject
-                                    </div>
-                                    <div className="font-medium">
-                                        {selectedItem.subject}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-sm font-medium text-muted-foreground">
-                                        From
-                                    </div>
-                                    <div>{selectedItem.fromName}</div>
-                                </div>
-                                <div>
-                                    <div className="text-sm font-medium text-muted-foreground">
-                                        Status
-                                    </div>
-                                    <Badge
-                                        variant={
-                                            selectedItem.status === 0
-                                                ? 'secondary'
-                                                : 'default'
-                                        }
-                                    >
-                                        {selectedItem.status === 0
-                                            ? 'Pending'
-                                            : 'Sent'}
-                                    </Badge>
-                                </div>
-                                <div>
-                                    <div className="text-sm font-medium text-muted-foreground">
-                                        Recipients
-                                    </div>
-                                    <div>{selectedItem.recipientsSummary}</div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="text-sm font-medium text-muted-foreground mb-1">
-                                    Raw Data
-                                </div>
-                                <div className="bg-muted p-4 rounded-md overflow-auto max-h-[600px]">
-                                    <JsonViewer
-                                        className="max-h-[600px]"
-                                        data={selectedItem}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <div className="mt-4">
+                        {notificationQueue && (
+                            <EmailPreviewContent
+                                notificationQueue={notificationQueue}
+                            />
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
