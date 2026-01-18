@@ -24,8 +24,11 @@ import { cn } from '@/lib/utils';
 import { useLocation, useNavigate } from '@tanstack/react-router';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
+import { UserAccount } from 'liferay-headless-rest-client/headless-admin-user-v1.0';
+import clsx from 'clsx';
 
 interface SidebarProps {
+    myUserAccount?: UserAccount;
     onExportImport?: (initialTab?: 'export' | 'import') => void;
     objectDefinitions: Required<ObjectDefinition>[];
 }
@@ -47,6 +50,7 @@ function getContrastingTextColor(hex?: string) {
 }
 
 export function Sidebar({
+    myUserAccount,
     onExportImport,
     objectDefinitions = [],
 }: SidebarProps) {
@@ -414,6 +418,7 @@ export function Sidebar({
                             const textColor = getContrastingTextColor(
                                 selectedEnvInfo.color,
                             );
+
                             return (
                                 <div
                                     className="p-3 rounded-lg border"
@@ -457,8 +462,20 @@ export function Sidebar({
                                         className="text-xs flex items-center gap-1 mt-2"
                                         style={{ color: textColor }}
                                     >
-                                        <div className="w-2 h-2 bg-green-500 rounded-full shrink-0"></div>
-                                        Connected
+                                        <div
+                                            className={clsx(
+                                                'w-2 h-2 rounded-full shrink-0',
+                                                {
+                                                    'bg-green-500':
+                                                        myUserAccount,
+                                                    'bg-red-500':
+                                                        !myUserAccount,
+                                                },
+                                            )}
+                                        ></div>
+                                        {myUserAccount
+                                            ? 'Connected'
+                                            : 'Offline'}
                                     </div>
                                 </div>
                             );
