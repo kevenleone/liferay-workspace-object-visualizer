@@ -1,11 +1,15 @@
 import { useState } from 'react';
+import { toast } from '@/hooks/use-toast';
 import {
+    deletePortalInstance,
+    putPortalInstanceDeactivate,
+    putPortalInstanceActivate,
     PagePortalInstance,
     PortalInstance,
     getPortalInstancesPage,
     postPortalInstance,
 } from 'liferay-headless-rest-client/headless-portal-instances-v1.0';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { GenericDataTable } from '@/components/generic-data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,14 +23,23 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Database, Plus } from 'lucide-react';
+import { Database, Pause, Play, Plus, Trash2 } from 'lucide-react';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { liferayClient } from '@/lib/headless-client';
+import { siteInitializers } from '@/constants/siteInitializers';
 
 export const Route = createFileRoute('/p/virtual-instances')({
     component: VirtualInstancesPage,
     loader: async () => {
         const { data, error } = await getPortalInstancesPage({
             client: liferayClient,
+            query: { skipDefault: 'true' },
         });
 
         if (error) {
@@ -39,13 +52,23 @@ export const Route = createFileRoute('/p/virtual-instances')({
 
 function VirtualInstancesPage() {
     const portalInstancesPage = Route.useLoaderData();
+    const router = useRouter();
 
     const instances = portalInstancesPage?.items ?? [];
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-    const [newPortalInstance, setNewPortalInstance] = useState<PortalInstance>({
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [instanceToDelete, setInstanceToDelete] =
+        useState<PortalInstance | null>(null);
+    const [newPortalInstance, setNewPortalInstance] = useState({
         domain: '',
         portalInstanceId: '',
         virtualHost: '',
+        siteInitializerKey: 'com.liferay.site.initializer.welcome',
+        admin: {
+            emailAddress: '',
+            familyName: '',
+            givenName: '',
+        },
     });
 
     const handleCreateInstance = async (e: React.FormEvent) => {
@@ -53,18 +76,101 @@ function VirtualInstancesPage() {
         try {
             await postPortalInstance({
                 body: newPortalInstance,
+                client: liferayClient,
             });
 
             setIsCreateDialogOpen(false);
+
             setNewPortalInstance({
                 portalInstanceId: '',
                 domain: '',
                 virtualHost: '',
+                siteInitializerKey: 'com.liferay.site.initializer.welcome',
+                admin: {
+                    emailAddress: '',
+                    familyName: '',
+                    givenName: '',
+                },
             });
 
             // invalidate cache
         } catch (error) {
             console.error('Error creating portal instance:', error);
+        }
+    };
+
+    const handleActivate = async (instance: PortalInstance) => {
+        try {
+            await putPortalInstanceActivate({
+                path: { portalInstanceId: instance.portalInstanceId as string },
+                client: liferayClient,
+            });
+            router.invalidate();
+            toast({
+                title: 'Instance Activated',
+                description: `Virtual instance "${instance.portalInstanceId}" has been activated.`,
+            });
+        } catch (error) {
+            console.error('Error activating portal instance:', error);
+            toast({
+                title: 'Activation Failed',
+                description: 'Failed to activate the virtual instance.',
+                variant: 'destructive',
+            });
+        }
+    };
+
+    const handleDeactivate = async (instance: PortalInstance) => {
+        try {
+            await putPortalInstanceDeactivate({
+                path: { portalInstanceId: instance.portalInstanceId as string },
+                client: liferayClient,
+            });
+            router.invalidate();
+            toast({
+                title: 'Instance Deactivated',
+                description: `Virtual instance "${instance.portalInstanceId}" has been deactivated.`,
+            });
+        } catch (error) {
+            console.error('Error deactivating portal instance:', error);
+            toast({
+                title: 'Deactivation Failed',
+                description: 'Failed to deactivate the virtual instance.',
+                variant: 'destructive',
+            });
+        }
+    };
+
+    const handleDelete = (instance: PortalInstance) => {
+        setInstanceToDelete(instance);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (instanceToDelete) {
+            try {
+                await deletePortalInstance({
+                    path: {
+                        portalInstanceId:
+                            instanceToDelete.portalInstanceId as string,
+                    },
+                    client: liferayClient,
+                });
+                router.invalidate();
+                toast({
+                    title: 'Instance Deleted',
+                    description: `Virtual instance "${instanceToDelete.portalInstanceId}" has been deleted.`,
+                });
+                setDeleteDialogOpen(false);
+                setInstanceToDelete(null);
+            } catch (error) {
+                console.error('Error deleting portal instance:', error);
+                toast({
+                    title: 'Deletion Failed',
+                    description: 'Failed to delete the virtual instance.',
+                    variant: 'destructive',
+                });
+            }
         }
     };
 
@@ -104,6 +210,38 @@ function VirtualInstancesPage() {
                 </Badge>
             ),
         },
+        {
+            header: 'Actions',
+            cell: (item: PortalInstance) => (
+                <div className="flex items-center justify-end gap-2">
+                    {item.active ? (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeactivate(item)}
+                        >
+                            <Pause className="h-4 w-4" />
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleActivate(item)}
+                        >
+                            <Play className="h-4 w-4" />
+                        </Button>
+                    )}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(item)}
+                        className="text-red-600 hover:text-red-700"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            ),
+        },
     ];
 
     return (
@@ -134,7 +272,7 @@ function VirtualInstancesPage() {
                 open={isCreateDialogOpen}
                 onOpenChange={setIsCreateDialogOpen}
             >
-                <DialogContent>
+                <DialogContent className="max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Create Virtual Instance</DialogTitle>
                         <DialogDescription>
@@ -162,36 +300,143 @@ function VirtualInstancesPage() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="domain">Domain</Label>
-                            <Input
-                                id="domain"
-                                value={newPortalInstance.domain}
-                                onChange={(e) =>
-                                    setNewPortalInstance({
-                                        ...newPortalInstance,
-                                        domain: e.target.value,
-                                    })
-                                }
-                                placeholder="e.g. liferay.com"
-                                required
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="domain">Domain</Label>
+                                <Input
+                                    id="domain"
+                                    value={newPortalInstance.domain}
+                                    onChange={(e) =>
+                                        setNewPortalInstance({
+                                            ...newPortalInstance,
+                                            domain: e.target.value,
+                                        })
+                                    }
+                                    placeholder="e.g. liferay.com"
+                                    required
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="virtualHost">
+                                    Virtual Host
+                                </Label>
+                                <Input
+                                    id="virtualHost"
+                                    value={newPortalInstance.virtualHost}
+                                    onChange={(e) =>
+                                        setNewPortalInstance({
+                                            ...newPortalInstance,
+                                            virtualHost: e.target.value,
+                                        })
+                                    }
+                                    placeholder="e.g. www.liferay.com"
+                                    required
+                                />
+                            </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="virtualHost">Virtual Host</Label>
-                            <Input
-                                id="virtualHost"
-                                value={newPortalInstance.virtualHost}
-                                onChange={(e) =>
+                            <Label htmlFor="siteInitializerKey">
+                                Site Initializer
+                            </Label>
+                            <Select
+                                value={newPortalInstance.siteInitializerKey}
+                                onValueChange={(value) =>
                                     setNewPortalInstance({
                                         ...newPortalInstance,
-                                        virtualHost: e.target.value,
+                                        siteInitializerKey: value,
                                     })
                                 }
-                                placeholder="e.g. www.liferay.com"
                                 required
-                            />
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a site initializer" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {siteInitializers.map((initializer) => (
+                                        <SelectItem
+                                            key={initializer.key}
+                                            value={initializer.key}
+                                        >
+                                            {initializer.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-medium">
+                                Admin Details
+                            </h3>
+                            <div className="space-y-2">
+                                <Label htmlFor="adminEmail">
+                                    Admin Email Address
+                                </Label>
+                                <Input
+                                    id="adminEmail"
+                                    type="email"
+                                    value={newPortalInstance.admin.emailAddress}
+                                    onChange={(e) =>
+                                        setNewPortalInstance({
+                                            ...newPortalInstance,
+                                            admin: {
+                                                ...newPortalInstance.admin,
+                                                emailAddress: e.target.value,
+                                            },
+                                        })
+                                    }
+                                    placeholder="e.g. admin@liferay.com"
+                                    required
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="adminFamilyName">
+                                        Admin Family Name
+                                    </Label>
+                                    <Input
+                                        id="adminFamilyName"
+                                        value={
+                                            newPortalInstance.admin.familyName
+                                        }
+                                        onChange={(e) =>
+                                            setNewPortalInstance({
+                                                ...newPortalInstance,
+                                                admin: {
+                                                    ...newPortalInstance.admin,
+                                                    familyName: e.target.value,
+                                                },
+                                            })
+                                        }
+                                        placeholder="e.g. Doe"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="adminGivenName">
+                                        Admin Given Name
+                                    </Label>
+                                    <Input
+                                        id="adminGivenName"
+                                        value={
+                                            newPortalInstance.admin.givenName
+                                        }
+                                        onChange={(e) =>
+                                            setNewPortalInstance({
+                                                ...newPortalInstance,
+                                                admin: {
+                                                    ...newPortalInstance.admin,
+                                                    givenName: e.target.value,
+                                                },
+                                            })
+                                        }
+                                        placeholder="e.g. John"
+                                        required
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <DialogFooter>
@@ -205,6 +450,30 @@ function VirtualInstancesPage() {
                             <Button type="submit">Create Instance</Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Virtual Instance</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete the virtual instance
+                            "{instanceToDelete?.portalInstanceId}"? This action
+                            cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setDeleteDialogOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={confirmDelete}>
+                            Delete
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
