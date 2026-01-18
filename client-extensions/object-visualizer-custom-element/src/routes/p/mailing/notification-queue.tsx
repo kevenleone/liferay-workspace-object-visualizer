@@ -12,6 +12,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { liferayClient } from '@/lib/headless-client';
+import { JsonViewer } from '@/components/ui/json-viewer';
 
 export const Route = createFileRoute('/p/mailing/notification-queue')({
     component: NotificationQueuePage,
@@ -102,10 +103,11 @@ function NotificationQueuePage() {
                 open={!!selectedItem}
                 onOpenChange={(open) => !open && setSelectedItem(null)}
             >
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-4xl">
                     <DialogHeader>
                         <DialogTitle>Notification Details</DialogTitle>
                     </DialogHeader>
+
                     {selectedItem && (
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -150,10 +152,11 @@ function NotificationQueuePage() {
                                 <div className="text-sm font-medium text-muted-foreground mb-1">
                                     Raw Data
                                 </div>
-                                <div className="bg-muted p-4 rounded-md overflow-auto max-h-[300px]">
-                                    <pre className="text-xs font-mono">
-                                        {JSON.stringify(selectedItem, null, 2)}
-                                    </pre>
+                                <div className="bg-muted p-4 rounded-md overflow-auto max-h-[600px]">
+                                    <JsonViewer
+                                        className="max-h-[600px]"
+                                        data={selectedItem}
+                                    />
                                 </div>
                             </div>
                         </div>

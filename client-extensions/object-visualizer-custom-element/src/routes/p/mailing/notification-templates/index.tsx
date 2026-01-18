@@ -86,7 +86,7 @@ function NotificationTemplatesPage() {
             </div>
 
             <TemplatesList
-                templates={pageNotificationTemplate.items ?? []}
+                templates={pageNotificationTemplate?.items ?? []}
                 onDeleteTemplate={handleDeleteTemplate}
                 onDuplicateTemplate={handleDuplicateTemplate}
             />
