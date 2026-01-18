@@ -1,7 +1,9 @@
-import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { getNotificationQueueEntriesPage } from 'liferay-headless-rest-client/notification-v1.0';
+import { Mail } from 'lucide-react';
+import { useState } from 'react';
 
+import { EmailRender } from '@/components/email/email-render';
 import { GenericDataTable } from '@/components/generic-data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,8 +14,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { liferayClient } from '@/lib/headless-client';
-import { EmailRender } from '@/components/email/email-render';
-import { Mail } from 'lucide-react';
 
 export const Route = createFileRoute('/p/mailing/notification-queue')({
     component: NotificationQueuePage,
@@ -140,39 +140,37 @@ function NotificationQueuePage() {
 
     const columns = [
         {
-            header: 'ID',
             accessorKey: 'id' as const,
+            header: 'ID',
         },
         {
-            header: 'Subject',
             accessorKey: 'subject' as const,
             cell: (item: any) => (
                 <span className="font-medium">{item.subject}</span>
             ),
+            header: 'Subject',
         },
         {
-            header: 'From',
             accessorKey: 'fromName' as const,
             cell: (item: any) => (
                 <span className="text-gray-600">{item.fromName}</span>
             ),
+            header: 'From',
         },
         {
-            header: 'Recipients',
             accessorKey: 'recipientsSummary' as const,
+            header: 'Recipients',
         },
         {
-            header: 'Status',
             accessorKey: 'status' as const,
             cell: (item: any) => (
                 <Badge variant={item.status === 0 ? 'secondary' : 'default'}>
                     {item.status === 0 ? 'Pending' : 'Sent'}
                 </Badge>
             ),
+            header: 'Status',
         },
         {
-            header: 'Actions',
-            id: 'actions',
             cell: (item: any) => (
                 <Button
                     variant="ghost"
@@ -182,6 +180,8 @@ function NotificationQueuePage() {
                     Preview Email
                 </Button>
             ),
+            header: 'Actions',
+            id: 'actions',
         },
     ];
 

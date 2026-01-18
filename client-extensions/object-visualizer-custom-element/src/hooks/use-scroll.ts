@@ -1,5 +1,6 @@
-import { useShadcnContext } from '@/context/ShadcnContextProvider';
 import { useEffect } from 'react';
+
+import { useShadcnContext } from '@/context/ShadcnContextProvider';
 
 export default function useScrollUnlocked() {
     const { shadowRoot } = useShadcnContext();

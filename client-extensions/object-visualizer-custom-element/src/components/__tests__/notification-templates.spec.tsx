@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
 import { TemplatesList } from '../notification-templates';
 
 // Mock dependencies
@@ -14,11 +15,11 @@ vi.mock('@/hooks/use-variables', () => ({
 
 const mockTemplates = [
     {
+        externalReferenceCode: 'erc1',
         id: 1,
         name: 'Template 1',
-        subject: { en_US: 'Subject 1' },
         recipients: [{ name: 'user1' }],
-        externalReferenceCode: 'erc1',
+        subject: { en_US: 'Subject 1' },
     },
 ] as any;
 

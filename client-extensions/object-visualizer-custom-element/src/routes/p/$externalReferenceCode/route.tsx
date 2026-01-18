@@ -1,11 +1,11 @@
-import { getObjectDefinitionByExternalReferenceCode } from 'liferay-headless-rest-client/object-admin-v1.0';
-import { Table, Eye, Code, Play } from 'lucide-react';
 import {
     createFileRoute,
     Outlet,
     useLocation,
     useNavigate,
 } from '@tanstack/react-router';
+import { getObjectDefinitionByExternalReferenceCode } from 'liferay-headless-rest-client/object-admin-v1.0';
+import { Code, Eye, Play,Table } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,9 +35,9 @@ function RouteComponent() {
     const navigate = useNavigate();
 
     const navItems = [
-        { path: '/', icon: Eye, label: 'Data' },
-        { path: 'schema', icon: Code, label: 'Schema' },
-        { path: 'query', icon: Play, label: 'Query' },
+        { icon: Eye, label: 'Data', path: '/' },
+        { icon: Code, label: 'Schema', path: 'schema' },
+        { icon: Play, label: 'Query', path: 'query' },
     ];
 
     const activeRoute = navItems.some(({ path }) => pathname.endsWith(path));

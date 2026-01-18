@@ -1,9 +1,3 @@
-import JsonToCsvConverter from '@/components/dynamic-table';
-import { QueryInterface } from '@/components/query-interface';
-import { QueryHistory } from '@/components/query-history';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Liferay } from '@/lib/liferay';
 import {
     createFileRoute,
     useLoaderData,
@@ -13,34 +7,19 @@ import {
     ObjectDefinition,
     ObjectField,
 } from 'liferay-headless-rest-client/object-admin-v1.0';
-import { useMemo, useState, useEffect, useRef } from 'react';
-import { liferayClient } from '@/lib/headless-client';
+import { useEffect, useMemo, useRef,useState } from 'react';
+
+import JsonToCsvConverter from '@/components/dynamic-table';
+import { QueryHistory } from '@/components/query-history';
+import { QueryInterface } from '@/components/query-interface';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { db } from '@/lib/db';
+import { liferayClient } from '@/lib/headless-client';
+import { Liferay } from '@/lib/liferay';
 
 export const Route = createFileRoute('/p/$externalReferenceCode/query')({
     component: RouteComponent,
-    validateSearch: (search: Record<string, unknown>) => {
-        return {
-            query: typeof search.query === 'string' ? search.query : '',
-            page:
-                typeof search.page === 'string'
-                    ? parseInt(search.page, 10)
-                    : typeof search.page === 'number'
-                      ? search.page
-                      : 1,
-            pageSize:
-                typeof search.pageSize === 'string'
-                    ? parseInt(search.pageSize, 10)
-                    : typeof search.pageSize === 'number'
-                      ? search.pageSize
-                      : 10,
-        };
-    },
-    loaderDeps: ({ search }) => ({
-        query: search.query ?? '',
-        page: search.page ?? 1,
-        pageSize: search.pageSize ?? 10,
-    }),
     loader: async ({ parentMatchPromise, deps }) => {
         const { loaderData } = await parentMatchPromise;
         const { query, page, pageSize } = deps;
@@ -91,7 +70,29 @@ export const Route = createFileRoute('/p/$externalReferenceCode/query')({
             };
         }
     },
+    loaderDeps: ({ search }) => ({
+        page: search.page ?? 1,
+        pageSize: search.pageSize ?? 10,
+        query: search.query ?? '',
+    }),
     staleTime: 0, // Don't cache query results
+    validateSearch: (search: Record<string, unknown>) => {
+        return {
+            page:
+                typeof search.page === 'string'
+                    ? parseInt(search.page, 10)
+                    : typeof search.page === 'number'
+                      ? search.page
+                      : 1,
+            pageSize:
+                typeof search.pageSize === 'string'
+                    ? parseInt(search.pageSize, 10)
+                    : typeof search.pageSize === 'number'
+                      ? search.pageSize
+                      : 10,
+            query: typeof search.query === 'string' ? search.query : '',
+        };
+    },
 });
 
 function RouteComponent() {
@@ -130,28 +131,28 @@ function RouteComponent() {
             // Check for existing item with same query and no results/status yet
             const existing = await db.odataHistory
                 .where({
-                    query: query,
                     externalReferenceCode: externalReferenceCode,
+                    query: query,
                 })
                 .first();
 
             if (existing) {
                 await db.odataHistory.update(existing.id, {
-                    status,
-                    rowCount,
-                    error: errorMessage,
                     endpoint,
+                    error: errorMessage,
+                    rowCount,
+                    status,
                 });
             } else {
                 await db.odataHistory.add({
+                    endpoint,
+                    error: errorMessage,
+                    executedAt: new Date().toLocaleString(),
+                    externalReferenceCode,
                     id: Date.now().toString(),
                     query,
-                    executedAt: new Date().toLocaleString(),
-                    status,
                     rowCount,
-                    error: errorMessage,
-                    endpoint,
-                    externalReferenceCode,
+                    status,
                 });
             }
         };
@@ -181,17 +182,18 @@ function RouteComponent() {
                 },
             ) => any
         > = {
-            id: (item) => (
-                <Badge className="bg-emerald-400" variant="destructive">
-                    {item.id}
-                </Badge>
-            ),
             createDate: (item, { objectDefinition }) =>
                 new Date(
                     objectDefinition.system
                         ? item.createDate
                         : item.dateCreated,
                 ).toLocaleString(Liferay.ThemeDisplay.getBCP47LanguageId()),
+            creator: (_item, { objectEntry }) => objectEntry?.name,
+            id: (item) => (
+                <Badge className="bg-emerald-400" variant="destructive">
+                    {item.id}
+                </Badge>
+            ),
             modifiedDate: (item, { objectDefinition }) =>
                 new Date(
                     objectDefinition.system
@@ -203,7 +205,6 @@ function RouteComponent() {
                     {objectEntry?.label_i18n}
                 </Badge>
             ),
-            creator: (_item, { objectEntry }) => objectEntry?.name,
         };
 
         const transformFieldValue = (
@@ -215,7 +216,7 @@ function RouteComponent() {
             const transformer = fieldTransformers[fieldName];
 
             return transformer
-                ? transformer(item, { objectEntry, objectDefinition })
+                ? transformer(item, { objectDefinition, objectEntry })
                 : objectEntry;
         };
 
@@ -289,9 +290,9 @@ function RouteComponent() {
                         <div className="text-xs text-muted-foreground p-2 bg-muted rounded">
                             Debug: queryResults=
                             {JSON.stringify({
-                                hasResults: !!queryResults,
                                 hasError: !!queryResults?.error,
                                 hasItems: !!queryResults?.items,
+                                hasResults: !!queryResults,
                                 itemsLength: queryResults?.items?.length,
                                 rowsLength: rows.length,
                             })}

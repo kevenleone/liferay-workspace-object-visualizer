@@ -1,5 +1,16 @@
+import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
+import {
+    Database,
+    Download,
+    FileJson,
+    Settings,
+    Table,
+    Upload,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -7,7 +18,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -15,20 +26,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import {
-    Download,
-    Upload,
-    FileJson,
-    Database,
-    Table,
-    Settings,
-} from 'lucide-react';
-import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
-import { getLocalizedField } from '@/utils';
 import { Liferay } from '@/lib/liferay';
+import { getLocalizedField } from '@/utils';
 
 interface ExportImportDialogProps {
     open: boolean;
@@ -147,23 +148,23 @@ export function ExportImportDialog({
                       )
                     : undefined;
                 return {
-                    externalReferenceCode: def.externalReferenceCode,
-                    name: def.name,
-                    label: def.label,
-                    system: def.system,
-                    restContextPath: def.restContextPath,
-                    fields: includeSchema ? def.objectFields : undefined,
                     entries,
+                    externalReferenceCode: def.externalReferenceCode,
+                    fields: includeSchema ? def.objectFields : undefined,
+                    label: def.label,
+                    name: def.name,
+                    restContextPath: def.restContextPath,
+                    system: def.system,
                 };
             }),
         );
 
         const exportData = {
-            type: exportType,
             format: exportFormat,
             objectCount: selectedDefs.length,
             objects: objectsPayload,
             timestamp: new Date().toISOString(),
+            type: exportType,
         };
 
         const blob = new Blob([JSON.stringify(exportData, null, 2)], {

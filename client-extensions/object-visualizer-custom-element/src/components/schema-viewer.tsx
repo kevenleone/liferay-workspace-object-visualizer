@@ -1,21 +1,22 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
 import {
-    Database,
-    Link,
-    Type,
     Calendar,
-    Hash,
-    FileText,
-    ToggleRightIcon as Toggle,
     CheckCircle,
-    XCircle,
+    Database,
     Eye,
     EyeOff,
+    FileText,
+    Hash,
+    Link,
+    ToggleRightIcon as Toggle,
+    Type,
+    XCircle,
 } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
 import { getLocalizedField } from '@/utils';
 
 interface SchemaViewerProps {

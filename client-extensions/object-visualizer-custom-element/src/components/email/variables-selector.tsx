@@ -1,17 +1,18 @@
+import { faker } from '@faker-js/faker';
+import { Copy, Edit3, Plus, Sparkles,Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
-import { Plus, Edit3, Trash2, Copy, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { faker } from '@faker-js/faker';
 import { useVariables } from '@/hooks/use-variables';
 
 const PRESET_VARIABLES = [
@@ -59,8 +60,8 @@ export const VariableSelector = () => {
         });
 
         toast({
-            title: 'Variable Added',
             description: `Variable ${upperName} has been added.`,
+            title: 'Variable Added',
         });
     };
 
@@ -77,8 +78,8 @@ export const VariableSelector = () => {
         });
 
         toast({
-            title: 'Preset Variable Added',
             description: `Variable ${variableName} has been added with sample data.`,
+            title: 'Preset Variable Added',
         });
     };
 
@@ -118,8 +119,8 @@ export const VariableSelector = () => {
         setVariables(newVars);
 
         toast({
-            title: 'Variable Deleted',
             description: `Variable ${name} has been removed.`,
+            title: 'Variable Deleted',
         });
     };
 
@@ -127,8 +128,8 @@ export const VariableSelector = () => {
         navigator.clipboard.writeText(name);
 
         toast({
-            title: 'Copied to Clipboard',
             description: `${name} copied to clipboard.`,
+            title: 'Copied to Clipboard',
         });
     };
 

@@ -1,13 +1,22 @@
 import {
+    useLocation,
+    useNavigate,
+    useParams,
+    useRouter,
+    useSearch,
+} from '@tanstack/react-router';
+import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
+import {
+    Columns,
     Download,
     Edit,
     Eye,
+    FileJson,
     MoreHorizontal,
     Trash2,
-    FileJson,
-    Columns,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -25,30 +34,23 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { db } from '@/lib/db';
+import { liferayClient } from '@/lib/headless-client';
+import { getLocalizedField } from '@/utils';
+
 import { Badge } from './ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import {
     DropdownMenu,
+    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-    DropdownMenuLabel,
-    DropdownMenuCheckboxItem,
 } from './ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import PaginationControls from './ui/pagination';
 import { JsonViewer } from './ui/json-viewer';
-import { getLocalizedField } from '@/utils';
-import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
-import { liferayClient } from '@/lib/headless-client';
-import {
-    useRouter,
-    useNavigate,
-    useSearch,
-    useParams,
-    useLocation,
-} from '@tanstack/react-router';
-import { db } from '@/lib/db';
+import PaginationControls from './ui/pagination';
 
 type Props = {
     data: any[];
@@ -117,8 +119,8 @@ export default function JsonToCsvConverter({
         navigate({
             search: (prev) => ({
                 ...prev,
-                pageSize: newPageSize,
                 page: 1, // Reset to first page when changing page size
+                pageSize: newPageSize,
             }),
         });
     };

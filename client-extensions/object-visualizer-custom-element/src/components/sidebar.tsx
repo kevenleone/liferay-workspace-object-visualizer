@@ -1,31 +1,31 @@
-import { useState } from 'react';
+import { useLocation, useNavigate } from '@tanstack/react-router';
+import clsx from 'clsx';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { UserAccount } from 'liferay-headless-rest-client/headless-admin-user-v1.0';
 import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
 import {
+    Activity,
+    ChevronDown,
     ChevronLeft,
     Database,
     Download,
+    FileText,
     Folder,
+    Globe,
     RefreshCw,
     Search,
     Server,
     Table,
     TimerReset,
-    FileText,
-    Activity,
-    ChevronDown,
-    Globe,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
-import { cn } from '@/lib/utils';
-import { useLocation, useNavigate } from '@tanstack/react-router';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
-import { UserAccount } from 'liferay-headless-rest-client/headless-admin-user-v1.0';
-import clsx from 'clsx';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
     myUserAccount?: UserAccount;

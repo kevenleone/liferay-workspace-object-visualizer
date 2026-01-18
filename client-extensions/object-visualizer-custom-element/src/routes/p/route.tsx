@@ -1,17 +1,17 @@
-import { useState } from 'react';
 import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { getMyUserAccount } from 'liferay-headless-rest-client/headless-admin-user-v1.0';
 import {
     getObjectDefinitionsPage,
     ObjectDefinition,
 } from 'liferay-headless-rest-client/object-admin-v1.0';
+import { useState } from 'react';
 
-import { getMyUserAccount } from 'liferay-headless-rest-client/headless-admin-user-v1.0';
-
-import { liferayClient } from '@/lib/headless-client';
 import { ExportImportDialog } from '@/components/export-import-dialog';
 import { Sidebar } from '@/components/sidebar';
+import { liferayClient } from '@/lib/headless-client';
 
 export const Route = createFileRoute('/p')({
+    component: RouteComponent,
     loader: async () => {
         const [{ data: myUserAccount }, { data: objectDefinitionData }] =
             await Promise.all([
@@ -21,8 +21,8 @@ export const Route = createFileRoute('/p')({
                 getObjectDefinitionsPage({
                     client: liferayClient,
                     query: {
-                        sort: 'name:asc',
                         pageSize: '-1',
+                        sort: 'name:asc',
                     },
                 }),
             ]);
@@ -33,7 +33,6 @@ export const Route = createFileRoute('/p')({
                 objectDefinitionData?.items as Required<ObjectDefinition>[],
         };
     },
-    component: RouteComponent,
     staleTime: 60000,
 });
 

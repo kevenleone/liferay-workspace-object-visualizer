@@ -1,27 +1,28 @@
-import { describe, it, expect, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
 import { useIsMobile } from '../use-mobile';
 
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
-    writable: true,
     value: vi.fn().mockImplementation(query => ({
+        addEventListener: vi.fn(),
+        addListener: vi.fn(),
+        dispatchEvent: vi.fn(),
         matches: false,
         media: query,
         onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
+        removeListener: vi.fn(),
     })),
+    writable: true,
 });
 
 // Mock window
 Object.defineProperty(window, 'innerWidth', {
-    writable: true,
     configurable: true,
     value: 1024,
+    writable: true,
 });
 
 describe('useMobile', () => {

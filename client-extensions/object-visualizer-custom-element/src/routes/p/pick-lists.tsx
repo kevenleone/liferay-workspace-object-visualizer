@@ -1,15 +1,16 @@
-import { useMemo, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
+import { getListTypeDefinitionsPage } from 'liferay-headless-rest-client/headless-admin-list-type-v1.0';
+import { useMemo, useState } from 'react';
+
 import { GenericDataTable } from '@/components/generic-data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getListTypeDefinitionsPage } from 'liferay-headless-rest-client/headless-admin-list-type-v1.0';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogDescription,
 } from '@/components/ui/dialog';
 import {
     Table,
@@ -47,37 +48,35 @@ function PickListsPage() {
     const columns = useMemo(
         () => [
             {
-                header: 'ID',
                 accessorKey: 'id' as const,
+                header: 'ID',
             },
             {
-                header: 'Name',
                 accessorKey: 'name' as const,
                 cell: (item: any) => (
                     <span className="font-medium">{item.name}</span>
                 ),
+                header: 'Name',
             },
             {
-                header: 'External Reference Code',
                 accessorKey: 'externalReferenceCode' as const,
                 cell: (item: any) => (
                     <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">
                         {item.externalReferenceCode}
                     </code>
                 ),
+                header: 'External Reference Code',
             },
             {
-                header: 'System',
                 accessorKey: 'system' as const,
                 cell: (item: any) => (
                     <Badge variant={item.system ? 'default' : 'secondary'}>
                         {item.system ? 'System' : 'Custom'}
                     </Badge>
                 ),
+                header: 'System',
             },
             {
-                header: 'Actions',
-                id: 'actions',
                 cell: (item: any) => (
                     <Button
                         variant="ghost"
@@ -87,6 +86,8 @@ function PickListsPage() {
                         View Entries
                     </Button>
                 ),
+                header: 'Actions',
+                id: 'actions',
             },
         ],
         [setSelectedList],

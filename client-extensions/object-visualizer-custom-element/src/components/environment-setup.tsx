@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useNavigate, useRouter } from '@tanstack/react-router';
+import { Check, Eye, EyeOff, Plus, Settings } from 'lucide-react';
+import { useEffect,useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Select,
     SelectContent,
@@ -13,12 +16,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Eye, EyeOff, Check, Settings } from 'lucide-react';
+import { db } from '@/lib/db';
 import { getClientOptions, liferayClient } from '@/lib/headless-client';
 import { tauriFetch } from '@/lib/tauri-client';
-import { db } from '@/lib/db';
 
 interface Environment {
     id: string;
@@ -37,10 +38,6 @@ interface Environment {
     color: string;
     lastUsed?: Date | string;
     isDefault?: boolean;
-}
-
-interface EnvironmentSetupProps {
-    onEnvironmentSelect: (environmentId: string) => void;
 }
 
 const colorOptions = [
@@ -73,19 +70,19 @@ export function EnvironmentSetup() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
-        name: '',
-        host: '',
-        port: '8080',
-        protocol: 'http' as Environment['protocol'],
         authType: 'basic' as Environment['authType'],
-        username: '',
-        password: '',
-        token: '',
         clientId: '',
         clientSecret: '',
+        color: '#2196F3',
+        host: '',
+        name: '',
+        password: '',
+        port: '8080',
+        protocol: 'http' as Environment['protocol'],
+        token: '',
         tokenUrl: '',
         type: 'development' as Environment['type'],
-        color: '#2196F3',
+        username: '',
     });
 
     useEffect(() => {
@@ -126,9 +123,9 @@ export function EnvironmentSetup() {
         try {
             if (editingId) {
                 await tauriFetch(`/applications`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newEnv),
+                    headers: { 'Content-Type': 'application/json' },
+                    method: 'PUT',
                 });
 
                 setSavedEnvironments((prev) =>
@@ -136,9 +133,9 @@ export function EnvironmentSetup() {
                 );
             } else {
                 await tauriFetch('/applications', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newEnv),
+                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST',
                 });
 
                 setSavedEnvironments((prev) => [...prev, newEnv]);
@@ -154,19 +151,19 @@ export function EnvironmentSetup() {
 
     const resetForm = () => {
         setFormData({
-            name: '',
-            host: '',
-            port: '8080',
-            protocol: 'http',
             authType: 'basic',
-            username: '',
-            password: '',
-            token: '',
             clientId: '',
             clientSecret: '',
+            color: '#2196F3',
+            host: '',
+            name: '',
+            password: '',
+            port: '8080',
+            protocol: 'http',
+            token: '',
             tokenUrl: '',
             type: 'development',
-            color: '#2196F3',
+            username: '',
         });
     };
 
@@ -194,14 +191,14 @@ export function EnvironmentSetup() {
                 }`;
 
                 const sanitized = {
+                    baseUrl,
+                    color: env.color,
+                    host: env.host,
                     id: env.id,
                     name: env.name,
-                    host: env.host,
                     port: env.port,
                     protocol: env.protocol,
                     type: env.type,
-                    color: env.color,
-                    baseUrl,
                 };
 
                 await db.appState.put({
@@ -221,19 +218,19 @@ export function EnvironmentSetup() {
 
     const handleEdit = (env: Environment) => {
         setFormData({
-            name: env.name,
-            host: env.host,
-            port: env.port,
-            protocol: env.protocol,
             authType: env.authType,
-            username: env.username || '',
-            password: env.password || '',
-            token: env.token || '',
             clientId: env.clientId || '',
             clientSecret: env.clientSecret || '',
+            color: env.color,
+            host: env.host,
+            name: env.name,
+            password: env.password || '',
+            port: env.port,
+            protocol: env.protocol,
+            token: env.token || '',
             tokenUrl: env.tokenUrl || '',
             type: env.type,
-            color: env.color,
+            username: env.username || '',
         });
         setEditingId(env.id);
         setShowNewConnection(true);

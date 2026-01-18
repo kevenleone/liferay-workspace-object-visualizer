@@ -7,11 +7,11 @@ export function EmailRender({ children }: PropsWithChildren) {
             className="prose prose-sm max-w-none"
             sandbox="allow-scripts allow-same-origin"
             style={{
-                width: '100%',
-                height: '600px',
                 border: 'none',
                 fontFamily: 'system-ui, -apple-system, sans-serif',
+                height: '600px',
                 lineHeight: '1.6',
+                width: '100%',
             }}
             title="Email Preview"
         />

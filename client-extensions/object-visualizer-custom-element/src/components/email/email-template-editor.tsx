@@ -1,26 +1,26 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-
-import { Send, Eye, Save, ArrowLeft } from 'lucide-react';
-import { RichTextEditor } from './rich-text-editor';
-import { EmailPreview } from './email-preview';
-import { VariableSelector } from './variables-selector';
-import { RecipientManager } from './recipient-manager';
-import { useToast } from '@/hooks/use-toast';
 import {
     NotificationTemplate,
     patchNotificationTemplate,
     postNotificationQueueEntry,
 } from 'liferay-headless-rest-client/notification-v1.0';
+import { ArrowLeft,Eye, Save, Send } from 'lucide-react';
+import React, { useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import { useVariables } from '@/hooks/use-variables';
-import { Liferay } from '@/lib/liferay';
 import { liferayClient } from '@/lib/headless-client';
+import { Liferay } from '@/lib/liferay';
+
+import { EmailPreview } from './email-preview';
+import { RecipientManager } from './recipient-manager';
+import { RichTextEditor } from './rich-text-editor';
+import { VariableSelector } from './variables-selector';
 
 type EmailTemplateEditorProps = {
     notificationTemplate: Required<NotificationTemplate>;
@@ -82,8 +82,8 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                 fromName: recipient.fromName as string,
                 recipients: [
                     {
-                        fromName: recipient.fromName!.en_US,
                         from: recipient.from,
+                        fromName: recipient.fromName!.en_US,
                         to: recipient.to!.en_US,
                     },
                 ],
@@ -100,8 +100,8 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
         setIsSending(false);
 
         toast({
-            title: 'Email Sent Successfully',
             description: `Email sent to ${notificationTemplate.recipients.length} recipient(s).`,
+            title: 'Email Sent Successfully',
         });
     };
 

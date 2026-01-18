@@ -1,7 +1,4 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router';
-import { toast } from '@/hooks/use-toast';
-import { TemplatesList } from '@/components/notification-templates';
-
 import {
     deleteNotificationTemplate,
     getNotificationTemplatesPage,
@@ -9,14 +6,17 @@ import {
     PageNotificationTemplate,
     postNotificationTemplate,
 } from 'liferay-headless-rest-client/notification-v1.0';
+
+import { TemplatesList } from '@/components/notification-templates';
+import { toast } from '@/hooks/use-toast';
 import { liferayClient } from '@/lib/headless-client';
 
 export const Route = createFileRoute('/p/mailing/notification-templates/')({
     component: NotificationTemplatesPage,
     loader: async () => {
         const { data } = await getNotificationTemplatesPage({
-            query: { sort: 'name:asc' },
             client: liferayClient,
+            query: { sort: 'name:asc' },
         });
 
         return data as PageNotificationTemplate;
@@ -40,8 +40,8 @@ function NotificationTemplatesPage() {
         invalidate();
 
         toast({
-            title: 'Template Deleted',
             description: 'Template has been deleted successfully.',
+            title: 'Template Deleted',
         });
     };
 
@@ -69,8 +69,8 @@ function NotificationTemplatesPage() {
         invalidate();
 
         toast({
-            title: 'Template Duplicated',
             description: `Template "${notificationTemplate.name}" has been duplicated.`,
+            title: 'Template Duplicated',
         });
     };
 

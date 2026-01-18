@@ -1,10 +1,10 @@
+import { Mail, Plus, Users,X } from 'lucide-react';
 import React, { useState } from 'react';
-import { Plus, X, Mail, Users } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
 interface RecipientManagerProps {
@@ -31,16 +31,16 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
 
         if (!isValidEmail(email)) {
             return toast({
-                title: 'Invalid Email',
                 description: 'Please enter a valid email address.',
+                title: 'Invalid Email',
                 variant: 'destructive',
             });
         }
 
         if (recipients.includes(email)) {
             return toast({
-                title: 'Duplicate Email',
                 description: 'This email is already in the recipient list.',
+                title: 'Duplicate Email',
                 variant: 'destructive',
             });
         }
@@ -49,8 +49,8 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         setNewRecipient('');
 
         toast({
-            title: 'Recipient Added',
             description: `${email} has been added to the recipient list.`,
+            title: 'Recipient Added',
         });
     };
 
@@ -58,8 +58,8 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
         onChange(recipients.filter((r) => r !== email));
 
         toast({
-            title: 'Recipient Removed',
             description: `${email} has been removed from the recipient list.`,
+            title: 'Recipient Removed',
         });
     };
 
@@ -144,8 +144,8 @@ export const RecipientManager: React.FC<RecipientManagerProps> = ({
                             onClick={() => {
                                 onChange([...recipients, email]);
                                 toast({
-                                    title: 'Recipient Added',
                                     description: `${email} has been added.`,
+                                    title: 'Recipient Added',
                                 });
                             }}
                             className="text-xs h-6"

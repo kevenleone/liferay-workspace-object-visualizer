@@ -1,7 +1,8 @@
 import { useParams } from '@tanstack/react-router';
 import { useSelector } from '@xstate/store/react';
-import { variablesStore } from '@/store/variables-store';
 import { useCallback, useMemo } from 'react';
+
+import { variablesStore } from '@/store/variables-store';
 
 function replace(text: string, variables: object, customMarkup = true) {
     let result = text || '';
@@ -56,7 +57,6 @@ export function useVariables() {
 
     return {
         replaceVariables,
-        variables,
         setVariables: (newValues: Record<string, string>) => {
             const values = {
                 ...newValues,
@@ -64,9 +64,10 @@ export function useVariables() {
 
             variablesStore.send({
                 externalReferenceCode,
-                values,
                 type: 'setVariables',
+                values,
             });
         },
+        variables,
     };
 }

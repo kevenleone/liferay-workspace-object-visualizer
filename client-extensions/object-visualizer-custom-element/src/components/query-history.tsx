@@ -1,7 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useNavigate } from '@tanstack/react-router';
+import { useLiveQuery } from 'dexie-react-hooks';
+import {
+    CheckCircle,
+    Clock,
+    Copy,
+    History,
+    MoreHorizontal,
+    Trash2,
+    XCircle,
+} from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -9,17 +20,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    History,
-    Trash2,
-    Clock,
-    CheckCircle,
-    XCircle,
-    MoreHorizontal,
-    Copy,
-} from 'lucide-react';
-import { useNavigate } from '@tanstack/react-router';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { db } from '@/lib/db';
 
 interface QueryHistoryProps {
@@ -41,14 +42,14 @@ export function QueryHistory({ externalReferenceCode }: QueryHistoryProps) {
 
     const loadQuery = (query: string) => {
         navigate({
-            to: '/p/$externalReferenceCode/query',
             params: { externalReferenceCode },
+            replace: false,
             search: {
-                query,
                 page: 1,
                 pageSize: 10,
+                query,
             },
-            replace: false,
+            to: '/p/$externalReferenceCode/query',
         });
     };
 

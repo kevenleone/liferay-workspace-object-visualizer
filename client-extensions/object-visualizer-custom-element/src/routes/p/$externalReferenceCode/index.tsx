@@ -1,15 +1,15 @@
-import { useMemo } from 'react';
 import { createFileRoute, useLoaderData } from '@tanstack/react-router';
 import {
     ObjectDefinition,
     ObjectField,
 } from 'liferay-headless-rest-client/object-admin-v1.0';
+import { useMemo } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Liferay } from '@/lib/liferay';
-import { liferayClient } from '@/lib/headless-client';
-import { db } from '@/lib/db';
 import JsonToCsvConverter from '@/components/dynamic-table';
+import { Badge } from '@/components/ui/badge';
+import { db } from '@/lib/db';
+import { liferayClient } from '@/lib/headless-client';
+import { Liferay } from '@/lib/liferay';
 
 async function setObjectDefinitionTotalCount(
     externalReferenceCode: string,
@@ -28,26 +28,6 @@ async function setObjectDefinitionTotalCount(
 
 export const Route = createFileRoute('/p/$externalReferenceCode/')({
     component: RouteComponent,
-    validateSearch: (search: Record<string, unknown>) => {
-        return {
-            page:
-                typeof search.page === 'string'
-                    ? parseInt(search.page, 10)
-                    : typeof search.page === 'number'
-                      ? search.page
-                      : 1,
-            pageSize:
-                typeof search.pageSize === 'string'
-                    ? parseInt(search.pageSize, 10)
-                    : typeof search.pageSize === 'number'
-                      ? search.pageSize
-                      : 10,
-        };
-    },
-    loaderDeps: ({ search }) => ({
-        page: search.page ?? 1,
-        pageSize: search.pageSize ?? 10,
-    }),
     loader: async ({ parentMatchPromise, deps }) => {
         const { loaderData } = await parentMatchPromise;
         const page = deps.page;
@@ -95,12 +75,32 @@ export const Route = createFileRoute('/p/$externalReferenceCode/')({
 
         return {
             items: [],
-            totalCount: 0,
             page,
             pageSize,
+            totalCount: 0,
         };
     },
+    loaderDeps: ({ search }) => ({
+        page: search.page ?? 1,
+        pageSize: search.pageSize ?? 10,
+    }),
     staleTime: 60000,
+    validateSearch: (search: Record<string, unknown>) => {
+        return {
+            page:
+                typeof search.page === 'string'
+                    ? parseInt(search.page, 10)
+                    : typeof search.page === 'number'
+                      ? search.page
+                      : 1,
+            pageSize:
+                typeof search.pageSize === 'string'
+                    ? parseInt(search.pageSize, 10)
+                    : typeof search.pageSize === 'number'
+                      ? search.pageSize
+                      : 10,
+        };
+    },
 });
 
 function RouteComponent() {
@@ -131,15 +131,16 @@ function RouteComponent() {
                 },
             ) => any
         > = {
+            createDate: (item) =>
+                new Date(item.createDate || item.dateCreated).toLocaleString(
+                    Liferay.ThemeDisplay.getBCP47LanguageId(),
+                ),
+            creator: (_item, { objectEntry }) => objectEntry?.name,
             id: (item) => (
                 <Badge className="bg-sky-700" variant="destructive">
                     {item.id}
                 </Badge>
             ),
-            createDate: (item) =>
-                new Date(item.createDate || item.dateCreated).toLocaleString(
-                    Liferay.ThemeDisplay.getBCP47LanguageId(),
-                ),
             modifiedDate: (item) =>
                 new Date(item.modifiedDate || item.dateModified).toLocaleString(
                     Liferay.ThemeDisplay.getBCP47LanguageId(),
@@ -149,7 +150,6 @@ function RouteComponent() {
                     {objectEntry?.label_i18n}
                 </Badge>
             ),
-            creator: (_item, { objectEntry }) => objectEntry?.name,
         };
 
         const transformFieldValue = (
@@ -161,7 +161,7 @@ function RouteComponent() {
             const transformer = fieldTransformers[fieldName];
 
             return transformer
-                ? transformer(item, { objectEntry, objectDefinition })
+                ? transformer(item, { objectDefinition, objectEntry })
                 : objectEntry;
         };
 

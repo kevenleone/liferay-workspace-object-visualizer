@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
-import { Search, Edit, Trash2, Copy } from 'lucide-react';
-import { NotificationTemplate } from 'liferay-headless-rest-client/notification-v1.0';
 import { useNavigate } from '@tanstack/react-router';
+import { NotificationTemplate } from 'liferay-headless-rest-client/notification-v1.0';
+import { Copy,Edit, Search, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -15,14 +23,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { useVariablesFlat } from '@/hooks/use-variables';
 
 interface TemplatesListProps {

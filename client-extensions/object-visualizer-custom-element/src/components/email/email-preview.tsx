@@ -1,16 +1,17 @@
 import { NotificationTemplate } from 'liferay-headless-rest-client/notification-v1.0';
-import { Mail, Clock, Users, Maximize2 } from 'lucide-react';
+import { Clock, Mail, Maximize2,Users } from 'lucide-react';
 import React, { Fragment, useMemo, useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useVariables } from '@/hooks/use-variables';
+
 import {
     Dialog,
-    DialogTrigger,
     DialogContent,
-    DialogTitle,
     DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from '../ui/dialog';
 import { EmailRender } from './email-render';
 
@@ -34,17 +35,17 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
                 processedRecipients: notificationTemplate.recipients.map(
                     (recipient: any) => ({
                         ...recipient,
-                        to: { en_US: replaceVariables(recipient.to!.en_US) },
-                        cc: recipient.cc
-                            ? { en_US: replaceVariables(recipient.cc!.en_US) }
-                            : null,
                         bcc: recipient.bcc
                             ? { en_US: replaceVariables(recipient.bcc!.en_US) }
+                            : null,
+                        cc: recipient.cc
+                            ? { en_US: replaceVariables(recipient.cc!.en_US) }
                             : null,
                         from: replaceVariables(recipient.from),
                         fromName: {
                             en_US: replaceVariables(recipient.fromName!.en_US),
                         },
+                        to: { en_US: replaceVariables(recipient.to!.en_US) },
                     }),
                 ),
                 processedSubject: replaceVariables(

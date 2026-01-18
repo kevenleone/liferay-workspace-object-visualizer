@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Sidebar } from '@/components/sidebar';
-import { MainContent } from '@/components/main-content';
+
 import { ExportImportDialog } from '@/components/export-import-dialog';
+import { MainContent } from '@/components/main-content';
+import { Sidebar } from '@/components/sidebar';
 
 export function DatabaseBrowser() {
     const [selectedObject, setSelectedObject] = useState<string | null>(null);

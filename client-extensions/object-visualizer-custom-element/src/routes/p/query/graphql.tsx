@@ -1,29 +1,29 @@
-import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
+import { useLiveQuery } from 'dexie-react-hooks';
 import {
-    History,
-    Save,
-    Trash2,
-    Clock,
     CheckCircle,
-    XCircle,
-    MoreHorizontal,
+    Clock,
     Copy,
     Globe,
+    History,
+    MoreHorizontal,
     Play,
+    Save,
+    Trash2,
+    XCircle,
 } from 'lucide-react';
-import { liferayClient } from '@/lib/headless-client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     Select,
     SelectContent,
@@ -31,8 +31,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { Textarea } from '@/components/ui/textarea';
 import { db, type GraphqlHistoryItem } from '@/lib/db';
+import { liferayClient } from '@/lib/headless-client';
 
 export const Route = createFileRoute('/p/query/graphql')({
     component: GraphQLPage,
@@ -71,8 +72,8 @@ function GraphQLPage() {
 
         try {
             const { data, response: res } = await liferayClient.post({
-                url: '/o/graphql',
                 body: { query },
+                url: '/o/graphql',
             });
 
             const endTime = performance.now();
@@ -81,14 +82,14 @@ function GraphQLPage() {
             setRawResponse(data);
 
             const newItem: GraphqlHistoryItem = {
-                id: Date.now().toString(),
-                url: '/o/graphql',
-                query,
-                executedAt: new Date().toISOString(),
                 duration,
+                executedAt: new Date().toISOString(),
+                id: Date.now().toString(),
+                query,
+                response: data,
                 status: res.ok ? 'success' : 'error',
                 statusCode: res.status,
-                response: data,
+                url: '/o/graphql',
             };
 
             await db.graphqlHistory.add(newItem);
@@ -99,14 +100,14 @@ function GraphQLPage() {
             setRawResponse({ error: err.message });
 
             const newItem: GraphqlHistoryItem = {
-                id: Date.now().toString(),
-                url: '/o/graphql',
-                query,
-                executedAt: new Date().toISOString(),
                 duration,
+                executedAt: new Date().toISOString(),
+                id: Date.now().toString(),
+                query,
+                response: { error: err.message },
                 status: 'error',
                 statusCode: 0,
-                response: { error: err.message },
+                url: '/o/graphql',
             };
 
             await db.graphqlHistory.add(newItem);
@@ -119,12 +120,12 @@ function GraphQLPage() {
         if (!query || !queryName.trim()) return;
 
         const newItem: GraphqlHistoryItem = {
-            id: Date.now().toString(),
-            url: '/o/graphql',
-            query,
             executedAt: new Date().toISOString(),
-            status: 'success',
+            id: Date.now().toString(),
             name: queryName.trim(),
+            query,
+            status: 'success',
+            url: '/o/graphql',
         };
 
         await db.graphqlHistory.add(newItem);
@@ -158,7 +159,7 @@ function GraphQLPage() {
             let indent = 0;
 
             lines.forEach((line) => {
-                let trimmed = line.trim();
+                const trimmed = line.trim();
                 if (!trimmed) return;
 
                 if (trimmed.startsWith('}')) indent--;

@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Bold,
+    Code,
     Italic,
-    Underline,
     List,
     ListOrdered,
-    Code,
     Type,
+    Underline,
 } from 'lucide-react';
+import React, { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 interface RichTextEditorProps {
     value: string;

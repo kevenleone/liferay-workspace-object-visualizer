@@ -1,29 +1,29 @@
-import { useState } from 'react';
-import { toast } from '@/hooks/use-toast';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 import {
     deletePortalInstance,
-    putPortalInstanceDeactivate,
-    putPortalInstanceActivate,
+    getPortalInstancesPage,
     PagePortalInstance,
     PortalInstance,
-    getPortalInstancesPage,
     postPortalInstance,
+    putPortalInstanceActivate,
+    putPortalInstanceDeactivate,
 } from 'liferay-headless-rest-client/headless-portal-instances-v1.0';
-import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { Database, Pause, Play, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+
 import { GenericDataTable } from '@/components/generic-data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
-    DialogHeader,
-    DialogTitle,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Database, Pause, Play, Plus, Trash2 } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -31,8 +31,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { liferayClient } from '@/lib/headless-client';
 import { siteInitializers } from '@/constants/siteInitializers';
+import { toast } from '@/hooks/use-toast';
+import { liferayClient } from '@/lib/headless-client';
 
 export const Route = createFileRoute('/p/virtual-instances')({
     component: VirtualInstancesPage,
@@ -60,15 +61,15 @@ function VirtualInstancesPage() {
     const [instanceToDelete, setInstanceToDelete] =
         useState<PortalInstance | null>(null);
     const [newPortalInstance, setNewPortalInstance] = useState({
-        domain: '',
-        portalInstanceId: '',
-        virtualHost: '',
-        siteInitializerKey: 'com.liferay.site.initializer.welcome',
         admin: {
             emailAddress: '',
             familyName: '',
             givenName: '',
         },
+        domain: '',
+        portalInstanceId: '',
+        siteInitializerKey: 'com.liferay.site.initializer.welcome',
+        virtualHost: '',
     });
 
     const handleCreateInstance = async (e: React.FormEvent) => {
@@ -82,15 +83,15 @@ function VirtualInstancesPage() {
             setIsCreateDialogOpen(false);
 
             setNewPortalInstance({
-                portalInstanceId: '',
-                domain: '',
-                virtualHost: '',
-                siteInitializerKey: 'com.liferay.site.initializer.welcome',
                 admin: {
                     emailAddress: '',
                     familyName: '',
                     givenName: '',
                 },
+                domain: '',
+                portalInstanceId: '',
+                siteInitializerKey: 'com.liferay.site.initializer.welcome',
+                virtualHost: '',
             });
 
             // invalidate cache
@@ -102,19 +103,19 @@ function VirtualInstancesPage() {
     const handleActivate = async (instance: PortalInstance) => {
         try {
             await putPortalInstanceActivate({
-                path: { portalInstanceId: instance.portalInstanceId as string },
                 client: liferayClient,
+                path: { portalInstanceId: instance.portalInstanceId as string },
             });
             router.invalidate();
             toast({
-                title: 'Instance Activated',
                 description: `Virtual instance "${instance.portalInstanceId}" has been activated.`,
+                title: 'Instance Activated',
             });
         } catch (error) {
             console.error('Error activating portal instance:', error);
             toast({
-                title: 'Activation Failed',
                 description: 'Failed to activate the virtual instance.',
+                title: 'Activation Failed',
                 variant: 'destructive',
             });
         }
@@ -123,19 +124,19 @@ function VirtualInstancesPage() {
     const handleDeactivate = async (instance: PortalInstance) => {
         try {
             await putPortalInstanceDeactivate({
-                path: { portalInstanceId: instance.portalInstanceId as string },
                 client: liferayClient,
+                path: { portalInstanceId: instance.portalInstanceId as string },
             });
             router.invalidate();
             toast({
-                title: 'Instance Deactivated',
                 description: `Virtual instance "${instance.portalInstanceId}" has been deactivated.`,
+                title: 'Instance Deactivated',
             });
         } catch (error) {
             console.error('Error deactivating portal instance:', error);
             toast({
-                title: 'Deactivation Failed',
                 description: 'Failed to deactivate the virtual instance.',
+                title: 'Deactivation Failed',
                 variant: 'destructive',
             });
         }
@@ -150,24 +151,24 @@ function VirtualInstancesPage() {
         if (instanceToDelete) {
             try {
                 await deletePortalInstance({
+                    client: liferayClient,
                     path: {
                         portalInstanceId:
                             instanceToDelete.portalInstanceId as string,
                     },
-                    client: liferayClient,
                 });
                 router.invalidate();
                 toast({
-                    title: 'Instance Deleted',
                     description: `Virtual instance "${instanceToDelete.portalInstanceId}" has been deleted.`,
+                    title: 'Instance Deleted',
                 });
                 setDeleteDialogOpen(false);
                 setInstanceToDelete(null);
             } catch (error) {
                 console.error('Error deleting portal instance:', error);
                 toast({
-                    title: 'Deletion Failed',
                     description: 'Failed to delete the virtual instance.',
+                    title: 'Deletion Failed',
                     variant: 'destructive',
                 });
             }
@@ -176,42 +177,41 @@ function VirtualInstancesPage() {
 
     const columns = [
         {
-            header: 'Portal Instance ID',
             accessorKey: 'portalInstanceId' as const,
             cell: (item: PortalInstance) => (
                 <span className="font-medium text-gray-900">
                     {item.portalInstanceId}
                 </span>
             ),
+            header: 'Portal Instance ID',
         },
         {
-            header: 'Domain',
             accessorKey: 'domain' as const,
+            header: 'Domain',
         },
         {
-            header: 'Virtual Host',
             accessorKey: 'virtualHost' as const,
+            header: 'Virtual Host',
         },
         {
-            header: 'Company ID',
             accessorKey: 'companyId' as const,
             cell: (item: PortalInstance) => (
                 <code className="text-xs bg-gray-100 px-1 py-0.5 rounded text-gray-600">
                     {item.companyId}
                 </code>
             ),
+            header: 'Company ID',
         },
         {
-            header: 'Status',
             accessorKey: 'active' as const,
             cell: (item: PortalInstance) => (
                 <Badge variant={item.active ? 'default' : 'secondary'}>
                     {item.active ? 'Active' : 'Inactive'}
                 </Badge>
             ),
+            header: 'Status',
         },
         {
-            header: 'Actions',
             cell: (item: PortalInstance) => (
                 <div className="flex items-center justify-end gap-2">
                     {item.active ? (
@@ -241,6 +241,7 @@ function VirtualInstancesPage() {
                     </Button>
                 </div>
             ),
+            header: 'Actions',
         },
     ];
 

@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useVariables, useVariablesFlat } from '../use-variables';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { variablesStore } from '@/store/variables-store';
+
+import { useVariables, useVariablesFlat } from '../use-variables';
 
 // Mock the store
 vi.mock('@xstate/store/react', () => ({
@@ -21,8 +23,8 @@ vi.mock('@/store/variables-store', () => ({
     },
 }));
 
-import { useSelector } from '@xstate/store/react';
 import { useParams } from '@tanstack/react-router';
+import { useSelector } from '@xstate/store/react';
 
 const mockUseSelector = useSelector as any;
 const mockUseParams = useParams as any;
@@ -34,7 +36,7 @@ describe('useVariablesFlat', () => {
     });
 
     it('should return replaceVariables function that replaces variables with custom markup', () => {
-        const variables = { name: 'John', age: '25' };
+        const variables = { age: '25', name: 'John' };
         mockUseSelector.mockReturnValue({
             context: { variables: { someKey: variables } },
         });
@@ -46,7 +48,7 @@ describe('useVariablesFlat', () => {
     });
 
     it('should return replaceVariables function that replaces variables without custom markup', () => {
-        const variables = { name: 'John', age: '25' };
+        const variables = { age: '25', name: 'John' };
         mockUseSelector.mockReturnValue({
             context: { variables: { someKey: variables } },
         });
@@ -116,8 +118,8 @@ describe('useVariables', () => {
 
         expect(mockSend).toHaveBeenCalledWith({
             externalReferenceCode,
-            values: { age: '25' },
             type: 'setVariables',
+            values: { age: '25' },
         });
     });
 });

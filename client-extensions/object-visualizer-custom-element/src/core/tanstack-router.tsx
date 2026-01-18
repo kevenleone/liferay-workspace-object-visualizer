@@ -1,12 +1,13 @@
 import { createHashHistory, createRouter } from '@tanstack/react-router';
+import { RefreshCcw } from 'lucide-react';
 
 import { routeTree } from '../routeTree.gen';
-import { RefreshCcw } from 'lucide-react';
 
 const hashHistory = createHashHistory();
 
 export const router = createRouter({
     basepath: '/',
+    context: { shadowRoot: document },
     defaultPendingComponent: () => (
         <div className="fixed inset-0 z-50 bg-black/10 backdrop-blur-sm flex items-center justify-center">
             <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white shadow-md border border-gray-200">
@@ -15,7 +16,6 @@ export const router = createRouter({
             </div>
         </div>
     ),
-    context: { shadowRoot: document },
     history: hashHistory,
     routeTree,
 });

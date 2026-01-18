@@ -65,16 +65,23 @@ declare global {
 }
 
 export const Liferay = window.Liferay || {
-    liferayInstance: false,
     CommerceContext: {},
+    detach: (
+        type: keyof WindowEventMap,
+        callback: EventListenerOrEventListenerObject,
+    ) => window.removeEventListener(type, callback),
+    fire: () => null,
+    liferayInstance: false,
     MarketplaceCustomerFlow: 0,
+    on: (
+        type: keyof WindowEventMap,
+        callback: EventListenerOrEventListenerObject,
+    ) => window.addEventListener(type, callback),
     Service: {},
     ThemeDisplay: {
+        getBCP47LanguageId: () => 'en-US',
         getCanonicalURL: () => window.location.href,
         getCompanyGroupId: () => '',
-        getBCP47LanguageId: () => 'en-US',
-        getUserEmailAddress: () => '',
-        getUserName: () => '',
         getCompanyId: () => '',
         getDefaultLanguageId: () => 'en_US',
         getLanguageId: () => '',
@@ -84,7 +91,9 @@ export const Liferay = window.Liferay || {
         getPathThemeImages: () => '',
         getPortalURL: () => '',
         getURLHome: () => '',
+        getUserEmailAddress: () => '',
         getUserId: () => '',
+        getUserName: () => '',
         isSignedIn: () => {
             return false;
         },
@@ -94,13 +103,4 @@ export const Liferay = window.Liferay || {
         LocalStorage: localStorage,
         SessionStorage: sessionStorage,
     },
-    detach: (
-        type: keyof WindowEventMap,
-        callback: EventListenerOrEventListenerObject,
-    ) => window.removeEventListener(type, callback),
-    fire: () => null,
-    on: (
-        type: keyof WindowEventMap,
-        callback: EventListenerOrEventListenerObject,
-    ) => window.addEventListener(type, callback),
 };

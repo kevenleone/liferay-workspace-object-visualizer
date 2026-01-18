@@ -1,30 +1,30 @@
-import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
+import { useLiveQuery } from 'dexie-react-hooks';
 import {
-    Send,
-    History,
-    Save,
-    Trash2,
-    Clock,
     CheckCircle,
-    XCircle,
-    MoreHorizontal,
+    Clock,
+    Code,
     Copy,
     Globe,
-    Code,
+    History,
+    MoreHorizontal,
+    Save,
+    Send,
+    Trash2,
+    XCircle,
 } from 'lucide-react';
-import { liferayClient } from '@/lib/headless-client';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     Select,
     SelectContent,
@@ -32,8 +32,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { Textarea } from '@/components/ui/textarea';
 import { db, type RestHistoryItem } from '@/lib/db';
+import { liferayClient } from '@/lib/headless-client';
 export const Route = createFileRoute('/p/query/rest')({
     component: RestPage,
 });
@@ -65,8 +66,8 @@ function RestPage() {
 
         try {
             const options: any = {
-                url,
                 method,
+                url,
             };
 
             if (
@@ -76,7 +77,7 @@ function RestPage() {
             ) {
                 try {
                     options.body = JSON.parse(body);
-                } catch (e) {
+                } catch {
                     throw new Error('Invalid JSON body');
                 }
             }
@@ -91,16 +92,16 @@ function RestPage() {
             setRawResponse(data);
 
             const newItem: RestHistoryItem = {
-                id: Date.now().toString(),
-                url,
-                method,
-                executedAt: new Date().toISOString(),
                 duration,
+                executedAt: new Date().toISOString(),
+                id: Date.now().toString(),
+                method,
+                payload: options.body,
+                response: data,
+                responseSize: `${(JSON.stringify(data).length / 1024).toFixed(2)} KB`,
                 status: res.ok ? 'success' : 'error',
                 statusCode: res.status,
-                responseSize: `${(JSON.stringify(data).length / 1024).toFixed(2)} KB`,
-                response: data,
-                payload: options.body,
+                url,
             };
 
             await db.restHistory.add(newItem);
@@ -111,14 +112,14 @@ function RestPage() {
             setRawResponse({ error: err.message });
 
             const newItem: RestHistoryItem = {
-                id: Date.now().toString(),
-                url,
-                method,
-                executedAt: new Date().toISOString(),
                 duration,
+                executedAt: new Date().toISOString(),
+                id: Date.now().toString(),
+                method,
+                response: { error: err.message },
                 status: 'error',
                 statusCode: 0,
-                response: { error: err.message },
+                url,
             };
 
             await db.restHistory.add(newItem);
@@ -131,12 +132,12 @@ function RestPage() {
         if (!url || !queryName.trim()) return;
 
         const newItem: RestHistoryItem = {
-            id: Date.now().toString(),
-            url,
-            method,
             executedAt: new Date().toISOString(),
-            status: 'success',
+            id: Date.now().toString(),
+            method,
             name: queryName.trim(),
+            status: 'success',
+            url,
         };
 
         await db.restHistory.add(newItem);

@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { Database, FileText, Activity, Globe } from 'lucide-react';
+import { Activity, Database, FileText, Globe } from 'lucide-react';
+
 import {
     Card,
+    CardContent,
+    CardDescription,
     CardHeader,
     CardTitle,
-    CardDescription,
-    CardContent,
 } from '@/components/ui/card';
 
 export const Route = createFileRoute('/p/')({
@@ -14,24 +15,23 @@ export const Route = createFileRoute('/p/')({
 
 const capabilities = [
     {
-        title: 'Global',
+        bg: 'bg-gray-50',
+        color: 'text-gray-600',
         description: 'Manage global settings and virtual instances.',
         icon: Globe,
-        color: 'text-gray-600',
-        bg: 'bg-gray-50',
         items: [
             {
                 label: 'Virtual Instances',
                 path: '/p/virtual-instances',
             },
         ],
+        title: 'Global',
     },
     {
-        title: 'Mailing',
+        bg: 'bg-purple-50',
+        color: 'text-purple-600',
         description: 'Manage notification templates and queues.',
         icon: FileText,
-        color: 'text-purple-600',
-        bg: 'bg-purple-50',
         items: [
             {
                 label: 'Notification Templates',
@@ -42,28 +42,29 @@ const capabilities = [
                 path: '/p/mailing/notification-queue',
             },
         ],
+        title: 'Mailing',
     },
     {
-        title: 'Objects Framework',
+        bg: 'bg-blue-50',
+        color: 'text-blue-600',
         description: 'Define and manage custom objects and lists.',
         icon: Database,
-        color: 'text-blue-600',
-        bg: 'bg-blue-50',
         items: [
             { label: 'Objects', path: '/p' },
             { label: 'Pick Lists', path: '/p/pick-lists' },
         ],
+        title: 'Objects Framework',
     },
     {
-        title: 'Query',
+        bg: 'bg-orange-50',
+        color: 'text-orange-600',
         description: 'Test and debug your API queries.',
         icon: Activity,
-        color: 'text-orange-600',
-        bg: 'bg-orange-50',
         items: [
             { label: 'GraphQL Playground', path: '/p/query/graphql' },
             { label: 'REST Playground', path: '/p/query/rest' },
         ],
+        title: 'Query',
     },
 ];
 

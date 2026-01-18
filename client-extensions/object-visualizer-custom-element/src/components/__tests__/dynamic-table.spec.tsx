@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
 import JsonToCsvConverter from '../dynamic-table';
 
 // Mock dependencies
@@ -14,11 +15,11 @@ vi.mock('@/lib/headless-client', () => ({
 }));
 
 vi.mock('@tanstack/react-router', () => ({
-    useRouter: vi.fn(() => ({ invalidate: vi.fn() })),
-    useNavigate: vi.fn(() => vi.fn()),
-    useSearch: vi.fn(() => ({ page: 1, pageSize: 10 })),
-    useParams: vi.fn(() => ({ externalReferenceCode: 'test-erc' })),
     useLocation: vi.fn(() => ({ pathname: '/p/test-erc' })),
+    useNavigate: vi.fn(() => vi.fn()),
+    useParams: vi.fn(() => ({ externalReferenceCode: 'test-erc' })),
+    useRouter: vi.fn(() => ({ invalidate: vi.fn() })),
+    useSearch: vi.fn(() => ({ page: 1, pageSize: 10 })),
 }));
 
 vi.mock('@/lib/db', () => ({
@@ -54,12 +55,12 @@ vi.mock('@/components/ui/badge', () => ({
 
 vi.mock('@/components/ui/dropdown-menu', () => ({
     DropdownMenu: ({ children }: any) => <div>{children}</div>,
+    DropdownMenuCheckboxItem: ({ children, checked }: any) => <div>{checked ? 'Checked' : 'Unchecked'} {children}</div>,
     DropdownMenuContent: ({ children }: any) => <div>{children}</div>,
     DropdownMenuItem: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,
+    DropdownMenuLabel: ({ children }: any) => <div>{children}</div>,
     DropdownMenuSeparator: () => <hr />,
     DropdownMenuTrigger: ({ children }: any) => <div>{children}</div>,
-    DropdownMenuLabel: ({ children }: any) => <div>{children}</div>,
-    DropdownMenuCheckboxItem: ({ children, checked }: any) => <div>{checked ? 'Checked' : 'Unchecked'} {children}</div>,
 }));
 
 vi.mock('@/components/ui/dialog', () => ({
@@ -87,10 +88,10 @@ vi.mock('@/components/ui/json-viewer', () => ({
 }));
 
 const mockObjectDefinition = {
-    name: 'TestObject',
-    label: { en_US: 'Test Object' },
-    restContextPath: '/test-objects',
     externalReferenceCode: 'test-erc',
+    label: { en_US: 'Test Object' },
+    name: 'TestObject',
+    restContextPath: '/test-objects',
 };
 
 const mockData = [

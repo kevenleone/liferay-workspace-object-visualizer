@@ -1,10 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
+import {
+    CheckCircle,
+    Clock,
+    Copy,
+    Globe,
+    History,
+    MoreHorizontal,
+    Play,
+    Save,
+    Trash2,
+    XCircle,
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     Select,
@@ -13,28 +35,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-    Play,
-    Save,
-    History,
-    Trash2,
-    Clock,
-    CheckCircle,
-    XCircle,
-    MoreHorizontal,
-    Globe,
-    Copy,
-} from 'lucide-react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
-import { ObjectDefinition } from 'liferay-headless-rest-client/object-admin-v1.0';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { Textarea } from '@/components/ui/textarea';
 import { db, type ODataHistoryItem } from '@/lib/db';
 
 interface QueryInterfaceProps {
@@ -78,14 +79,14 @@ export function QueryInterface({
 
         // Navigate with query parameter to trigger loader
         navigate({
-            to: '/p/$externalReferenceCode/query',
             params: { externalReferenceCode },
+            replace: false,
             search: {
-                query: currentQuery,
                 page: 1, // Reset to first page
                 pageSize: search.pageSize ?? 10,
+                query: currentQuery,
             },
-            replace: false,
+            to: '/p/$externalReferenceCode/query',
         });
 
         onQueryExecute?.(currentQuery);
@@ -97,12 +98,12 @@ export function QueryInterface({
         // We'll update history after the query completes (in the route component)
         // For now, just add a pending entry
         const historyItem: ODataHistoryItem = {
+            duration,
+            endpoint: restContextPath,
+            executedAt: new Date().toISOString(),
             id: Date.now().toString(),
             query: currentQuery,
-            executedAt: new Date().toISOString(),
-            duration,
             status: 'success',
-            endpoint: restContextPath,
         };
 
         await db.odataHistory.add(historyItem);
@@ -112,12 +113,12 @@ export function QueryInterface({
         if (!currentQuery.trim() || !queryName.trim()) return;
 
         const historyItem: ODataHistoryItem = {
-            id: Date.now().toString(),
-            query: currentQuery,
-            executedAt: new Date().toISOString(),
-            status: 'success',
             endpoint: restContextPath,
+            executedAt: new Date().toISOString(),
+            id: Date.now().toString(),
             name: queryName.trim(),
+            query: currentQuery,
+            status: 'success',
         };
 
         await db.odataHistory.add(historyItem);
@@ -127,14 +128,14 @@ export function QueryInterface({
     const loadQuery = (query: string) => {
         setCurrentQuery(query);
         navigate({
-            to: '/p/$externalReferenceCode/query',
             params: { externalReferenceCode },
+            replace: false,
             search: {
-                query,
                 page: 1,
                 pageSize: search.pageSize ?? 10,
+                query,
             },
-            replace: false,
+            to: '/p/$externalReferenceCode/query',
         });
     };
 

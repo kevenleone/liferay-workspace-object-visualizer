@@ -1,8 +1,8 @@
-import { defineConfig, splitVendorChunkPlugin } from 'vite';
-import path from 'path';
-import react from '@vitejs/plugin-react-swc';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import react from '@vitejs/plugin-react-swc';
+import path from 'path';
+import { defineConfig, splitVendorChunkPlugin } from 'vite';
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -10,7 +10,10 @@ const devPort = 2026;
 
 export default defineConfig({
     build: {
+        // don't minify for debug builds
+        minify: !process.env.TAURI_ENV_DEBUG ? 'esbuild' : false,
         outDir: 'build/vite',
+
         rollupOptions: {
             output: {
                 assetFileNames: 'assets/[name][extname]',
@@ -18,15 +21,12 @@ export default defineConfig({
                 entryFileNames: 'main.js',
             },
         },
-
+        // produce sourcemaps for debug builds
+        sourcemap: !!process.env.TAURI_ENV_DEBUG,
         target:
             process.env.TAURI_ENV_PLATFORM == 'windows'
                 ? 'chrome105'
                 : 'safari13',
-        // don't minify for debug builds
-        minify: !process.env.TAURI_ENV_DEBUG ? 'esbuild' : false,
-        // produce sourcemaps for debug builds
-        sourcemap: !!process.env.TAURI_ENV_DEBUG,
     },
     clearScreen: false,
     envPrefix: ['VITE_', 'TAURI_ENV_'],
@@ -41,8 +41,8 @@ export default defineConfig({
     },
     plugins: [
         tanstackRouter({
-            target: 'react',
             autoCodeSplitting: true,
+            target: 'react',
         }),
         react(),
         tailwindcss(),
@@ -54,20 +54,20 @@ export default defineConfig({
         },
     },
     server: {
-        port: devPort,
-        origin: `http://localhost:${devPort}`,
-        strictPort: true,
-        host: host || false,
         hmr: host
             ? {
-                  protocol: 'ws',
-                  overlay: false,
                   host,
+                  overlay: false,
                   port: 1421,
+                  protocol: 'ws',
               }
             : {
                   overlay: false,
               },
+        host: host || false,
+        origin: `http://localhost:${devPort}`,
+        port: devPort,
+        strictPort: true,
 
         watch: {
             ignored: ['**/src-tauri/**'],
@@ -75,8 +75,8 @@ export default defineConfig({
     },
 
     test: {
-        globals: true,
         environment: 'jsdom',
+        globals: true,
         setupFiles: './src/test-setup.ts',
     },
 });

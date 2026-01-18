@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { describe, expect,it } from 'vitest';
+
 import { GenericDataTable } from '../generic-data-table';
 
 const mockData = [
@@ -8,8 +9,8 @@ const mockData = [
 ];
 
 const mockColumns = [
-    { header: 'ID', accessorKey: 'id' as const },
-    { header: 'Name', accessorKey: 'name' as const },
+    { accessorKey: 'id' as const, header: 'ID' },
+    { accessorKey: 'name' as const, header: 'Name' },
 ];
 
 describe('GenericDataTable', () => {

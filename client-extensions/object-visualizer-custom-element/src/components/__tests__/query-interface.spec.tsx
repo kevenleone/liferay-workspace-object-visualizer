@@ -1,20 +1,24 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { QueryInterface } from '../query-interface';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { db } from '@/lib/db';
+
+import { QueryInterface } from '../query-interface';
 
 // Mock the router
 vi.mock('@tanstack/react-router', () => ({
     useNavigate: vi.fn(),
-    useSearch: vi.fn(),
     useRouteContext: vi.fn(() => ({ shadowRoot: null })),
+    useSearch: vi.fn(),
 }));
 
 // Mock the DB
 vi.mock('@/lib/db', () => ({
     db: {
         odataHistory: {
+            add: vi.fn(),
+            delete: vi.fn(),
             where: vi.fn(() => ({
                 equals: vi.fn(() => ({
                     reverse: vi.fn(() => ({
@@ -22,8 +26,6 @@ vi.mock('@/lib/db', () => ({
                     })),
                 })),
             })),
-            add: vi.fn(),
-            delete: vi.fn(),
         },
     },
 }));
@@ -47,8 +49,8 @@ const mockObjectDefinition = {
 };
 
 const defaultProps = {
-    objectDefinition: mockObjectDefinition,
     externalReferenceCode: 'test-erc',
+    objectDefinition: mockObjectDefinition,
     onQueryExecute: vi.fn(),
     showHistory: true,
 };
@@ -57,7 +59,7 @@ describe('QueryInterface', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockUseNavigate.mockReturnValue(vi.fn());
-        mockUseSearch.mockReturnValue({ query: '', pageSize: 10 });
+        mockUseSearch.mockReturnValue({ pageSize: 10, query: '' });
         mockUseLiveQuery.mockReturnValue([]);
     });
 
@@ -70,7 +72,7 @@ describe('QueryInterface', () => {
     });
 
     it('should update current query when search params change', () => {
-        mockUseSearch.mockReturnValue({ query: '$top=10', pageSize: 10 });
+        mockUseSearch.mockReturnValue({ pageSize: 10, query: '$top=10' });
 
         render(<QueryInterface {...defaultProps} />);
 
@@ -91,14 +93,14 @@ describe('QueryInterface', () => {
         await userEvent.click(executeButton);
 
         expect(mockNavigate).toHaveBeenCalledWith({
-            to: '/p/$externalReferenceCode/query',
             params: { externalReferenceCode: 'test-erc' },
+            replace: false,
             search: expect.objectContaining({
-                query: '$filter=status eq \'active\'',
                 page: 1,
                 pageSize: 10,
+                query: '$filter=status eq \'active\'',
             }),
-            replace: false,
+            to: '/p/$externalReferenceCode/query',
         });
         expect(defaultProps.onQueryExecute).toHaveBeenCalledWith('$filter=status eq \'active\'');
         expect(mockDbAdd).toHaveBeenCalled();
@@ -116,8 +118,8 @@ describe('QueryInterface', () => {
         await userEvent.click(saveButton);
 
         expect(mockDbAdd).toHaveBeenCalledWith(expect.objectContaining({
-            query: '$top=5',
             name: 'Test Query',
+            query: '$top=5',
         }));
     });
 
@@ -129,12 +131,12 @@ describe('QueryInterface', () => {
 
     it('should show query history when available', () => {
         const historyItem = {
+            duration: '0.123s',
+            endpoint: '/test-objects',
+            executedAt: '2023-01-01T00:00:00.000Z',
             id: '1',
             query: '$top=10',
-            executedAt: '2023-01-01T00:00:00.000Z',
             status: 'success',
-            endpoint: '/test-objects',
-            duration: '0.123s',
         };
 
         mockUseLiveQuery.mockReturnValue([historyItem]);
