@@ -1,6 +1,6 @@
 import { NotificationTemplate } from 'liferay-headless-rest-client/notification-v1.0';
 import { Mail, Clock, Users, Maximize2 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { Fragment, useMemo, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,16 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
                     (recipient: any) => ({
                         ...recipient,
                         to: { en_US: replaceVariables(recipient.to!.en_US) },
+                        cc: recipient.cc
+                            ? { en_US: replaceVariables(recipient.cc!.en_US) }
+                            : null,
+                        bcc: recipient.bcc
+                            ? { en_US: replaceVariables(recipient.bcc!.en_US) }
+                            : null,
+                        from: replaceVariables(recipient.from),
+                        fromName: {
+                            en_US: replaceVariables(recipient.fromName!.en_US),
+                        },
                     }),
                 ),
                 processedSubject: replaceVariables(
@@ -56,7 +66,25 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
                             From:
                         </span>
                         <span className="text-sm text-foreground">
-                            noreply@company.com
+                            {processedRecipients.length > 0 && (
+                                <>
+                                    <span
+                                        className="text-sm text-foreground font-medium"
+                                        dangerouslySetInnerHTML={{
+                                            __html: processedRecipients[0]
+                                                .fromName.en_US,
+                                        }}
+                                    />
+                                    &ensp;
+                                    <span
+                                        className="text-sm text-foreground font-medium"
+                                        dangerouslySetInnerHTML={{
+                                            __html: processedRecipients[0].from,
+                                        }}
+                                    />
+                                    &gt;
+                                </>
+                            )}
                         </span>
                     </div>
                     <div className="flex items-start justify-between">
@@ -64,20 +92,69 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
                             To:
                         </span>
                         <div className="text-right">
-                            {processedRecipients.map(
-                                ({ from, fromName }: any, index) => (
-                                    <span key={index}>
-                                        <strong>{fromName.en_US}</strong>{' '}
-                                        {`<${from}>`}
-                                    </span>
-                                ),
-                            )}
+                            {processedRecipients.map(({ to }: any, index) => (
+                                <Fragment key={index}>
+                                    <span
+                                        className="text-sm text-foreground font-medium"
+                                        dangerouslySetInnerHTML={{
+                                            __html: to.en_US,
+                                        }}
+                                    />
+
+                                    {index < processedRecipients.length - 1 &&
+                                        ', '}
+                                </Fragment>
+                            ))}
                         </div>
                     </div>
+                    {processedRecipients.some((r: any) => r.cc) && (
+                        <div className="flex items-start justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                Cc:
+                            </span>
+                            <div className="text-right">
+                                {processedRecipients
+                                    .filter((r: any) => r.cc)
+                                    .map(({ cc }: any, index) => (
+                                        <span key={index}>
+                                            {cc.en_US}
+                                            {index <
+                                                processedRecipients.filter(
+                                                    (r: any) => r.cc,
+                                                ).length -
+                                                    1 && ', '}
+                                        </span>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
+                    {processedRecipients.some((r: any) => r.bcc) && (
+                        <div className="flex items-start justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                Bcc:
+                            </span>
+
+                            <div className="text-right">
+                                {processedRecipients
+                                    .filter((r: any) => r.bcc)
+                                    .map(({ bcc }: any, index) => (
+                                        <span key={index}>
+                                            {bcc.en_US}
+                                            {index <
+                                                processedRecipients.filter(
+                                                    (r: any) => r.bcc,
+                                                ).length -
+                                                    1 && ', '}
+                                        </span>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-muted-foreground">
                             Subject:
                         </span>
+
                         <span
                             className="text-sm text-foreground font-medium"
                             dangerouslySetInnerHTML={{
