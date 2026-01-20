@@ -6,6 +6,11 @@ import {
 import { ArrowLeft,Eye, Save, Send } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { EmailPreview } from './email-preview';
+import { RecipientManager } from './recipient-manager';
+import { RichTextEditor } from './rich-text-editor';
+import { VariableSelector } from './variables-selector';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,10 +22,6 @@ import { useVariables } from '@/hooks/use-variables';
 import { liferayClient } from '@/lib/headless-client';
 import { Liferay } from '@/lib/liferay';
 
-import { EmailPreview } from './email-preview';
-import { RecipientManager } from './recipient-manager';
-import { RichTextEditor } from './rich-text-editor';
-import { VariableSelector } from './variables-selector';
 
 type EmailTemplateEditorProps = {
     notificationTemplate: Required<NotificationTemplate>;
@@ -116,7 +117,7 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
     };
 
     return (
-        <div className="mx-auto space-y-6 h-full px-8 overflow-auto">
+        <div className="mx-auto py-4 space-y-6 h-full px-8 overflow-auto">
             <div>
                 <div className="flex mb-4 items-center justify-between">
                     <div className="flex items-center gap-4">

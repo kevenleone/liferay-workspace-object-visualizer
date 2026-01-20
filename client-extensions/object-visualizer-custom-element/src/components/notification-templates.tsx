@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { NotificationTemplate } from 'liferay-headless-rest-client/notification-v1.0';
-import { Copy,Edit, Search, Trash2 } from 'lucide-react';
+import { Copy, Edit, Search, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -54,6 +54,9 @@ export const TemplatesList: React.FC<TemplatesListProps> = ({
 
     const handleDelete = (templateId: string) => {
         setTemplateToDelete(templateId);
+
+
+
         setDeleteDialogOpen(true);
     };
 
@@ -66,7 +69,7 @@ export const TemplatesList: React.FC<TemplatesListProps> = ({
     };
 
     return (
-        <Card className="h-full">
+        <Card className="h-screen">
             <CardHeader>
                 <div className="relative">
                     <Search className="absolute left-3 top-[10px] transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -135,7 +138,7 @@ export const TemplatesList: React.FC<TemplatesListProps> = ({
                                                 __html: replaceVariables(
                                                     template.subject!.en_US,
                                                     template.externalReferenceCode ??
-                                                        '',
+                                                    '',
                                                 ),
                                             }}
                                         ></TableCell>
@@ -144,7 +147,7 @@ export const TemplatesList: React.FC<TemplatesListProps> = ({
                                                 {template.recipients!.length}{' '}
                                                 recipient
                                                 {template.recipients!.length !==
-                                                1
+                                                    1
                                                     ? 's'
                                                     : ''}
                                             </Badge>
@@ -203,7 +206,7 @@ export const TemplatesList: React.FC<TemplatesListProps> = ({
                     open={deleteDialogOpen}
                     onOpenChange={setDeleteDialogOpen}
                 >
-                    <DialogContent>
+                    <DialogContent className='max-w-lg'>
                         <DialogHeader>
                             <DialogTitle>Delete Template</DialogTitle>
                             <DialogDescription>
