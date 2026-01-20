@@ -34,7 +34,14 @@ function NotificationTemplatesPage() {
         });
 
         if (error) {
-            return console.error(error);
+            console.error(error);
+
+            return toast({
+                className: 'text-white',
+                description: (error as any).title,
+                title: 'Unable to delete template',
+                variant: 'destructive',
+            });
         }
 
         invalidate();
