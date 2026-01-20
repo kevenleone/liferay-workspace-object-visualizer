@@ -65,18 +65,29 @@ pub async fn start_server() {
         .route("/applications/:id", get(get_application))
         .route(
             "/proxy/*path",
-            get(
+            delete(
+                |State(state), Path(path), OriginalUri(original_uri), headers: HeaderMap| async move {
+                    let query = original_uri.query().map(|s| s.to_string());
+                    forward(state, path, Method::DELETE, headers, Bytes::new(), query).await
+                },
+            ).get(
                 |State(state), Path(path), OriginalUri(original_uri), headers: HeaderMap| async move {
                     let query = original_uri.query().map(|s| s.to_string());
                     forward(state, path, Method::GET, headers, Bytes::new(), query).await
                 },
             )
-            .post(
+            .patch(
+                |State(state), Path(path), OriginalUri(original_uri), headers: HeaderMap, body: Bytes| async move {
+                    let query = original_uri.query().map(|s| s.to_string());
+                    forward(state, path, Method::PATCH, headers, body, query).await
+                },
+            ).post(
                 |State(state), Path(path), OriginalUri(original_uri), headers: HeaderMap, body: Bytes| async move {
                     let query = original_uri.query().map(|s| s.to_string());
                     forward(state, path, Method::POST, headers, body, query).await
                 },
-            ),
+            )
+            ,
         )
         .layer(CorsLayer::permissive())
         .with_state(state);
