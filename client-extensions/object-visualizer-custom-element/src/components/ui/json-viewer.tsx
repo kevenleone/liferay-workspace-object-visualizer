@@ -1,9 +1,10 @@
 import { Check,ChevronRight, Copy } from 'lucide-react';
 import { useState } from 'react';
 
+import { Button } from './button';
+
 import { cn } from '@/lib/utils';
 
-import { Button } from './button';
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
 type JsonObject = { [key: string]: JsonValue };

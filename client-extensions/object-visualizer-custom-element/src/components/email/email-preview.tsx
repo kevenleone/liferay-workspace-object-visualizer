@@ -2,10 +2,6 @@ import { NotificationTemplate } from 'liferay-headless-rest-client/notification-
 import { Clock, Mail, Maximize2,Users } from 'lucide-react';
 import React, { Fragment, useMemo, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useVariables } from '@/hooks/use-variables';
-
 import {
     Dialog,
     DialogContent,
@@ -13,7 +9,13 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '../ui/dialog';
+
 import { EmailRender } from './email-render';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useVariables } from '@/hooks/use-variables';
+
 
 interface EmailPreviewProps {
     notificationTemplate: Required<NotificationTemplate>;

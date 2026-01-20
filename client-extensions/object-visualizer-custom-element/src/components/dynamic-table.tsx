@@ -17,6 +17,20 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { Badge } from './ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { JsonViewer } from './ui/json-viewer';
+import PaginationControls from './ui/pagination';
+
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -38,19 +52,6 @@ import { db } from '@/lib/db';
 import { liferayClient } from '@/lib/headless-client';
 import { getLocalizedField } from '@/utils';
 
-import { Badge } from './ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from './ui/dropdown-menu';
-import { JsonViewer } from './ui/json-viewer';
-import PaginationControls from './ui/pagination';
 
 type Props = {
     data: any[];
