@@ -32,6 +32,14 @@ pub struct Application {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+struct SanitizedApplication {
+    id: Option<String>,
+    name: Option<String>,
+    #[serde(flatten)]
+    extra: serde_json::Value,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 struct Database {
     environments: Vec<Application>,
 }
@@ -62,7 +70,7 @@ pub async fn start_server() {
             "/applications",
             post(add_application).get(get_applications).put(update_application),
         )
-        .route("/applications/:id", get(get_application))
+        .route("/applications/:id", get(get_application).delete(delete_application))
         .route(
             "/proxy/*path",
             delete(
@@ -134,9 +142,22 @@ async fn add_application(
     StatusCode::CREATED
 }
 
-async fn get_applications(State(state): State<AppState>) -> Json<Vec<Application>> {
+async fn get_applications(State(state): State<AppState>) -> Json<Vec<SanitizedApplication>> {
     let apps = state.applications.lock().unwrap().clone();
-    Json(apps)
+    let sanitized: Vec<SanitizedApplication> = apps.into_iter().map(|app| {
+        let mut extra = app.extra;
+        if let Some(obj) = extra.as_object_mut() {
+            obj.remove("clientSecret");
+            obj.remove("password");
+            obj.remove("token");
+        }
+        SanitizedApplication {
+            id: app.id,
+            name: app.name,
+            extra,
+        }
+    }).collect();
+    Json(sanitized)
 }
 
 async fn get_application(
@@ -163,6 +184,20 @@ async fn update_application(
         apps[index] = payload.clone();
         save_applications(&apps);
         Ok(Json(payload))
+    } else {
+        Err(StatusCode::NOT_FOUND)
+    }
+}
+
+async fn delete_application(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Result<StatusCode, StatusCode> {
+    let mut apps = state.applications.lock().unwrap();
+    if let Some(pos) = apps.iter().position(|app| app.id.as_deref() == Some(&id)) {
+        apps.remove(pos);
+        save_applications(&apps);
+        Ok(StatusCode::NO_CONTENT)
     } else {
         Err(StatusCode::NOT_FOUND)
     }

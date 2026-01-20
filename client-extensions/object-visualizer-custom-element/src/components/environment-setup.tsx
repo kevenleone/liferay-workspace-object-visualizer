@@ -1,9 +1,18 @@
-'use client';
-
 import { useNavigate, useRouter } from '@tanstack/react-router';
-import { Check, Eye, EyeOff, Plus, Settings } from 'lucide-react';
-import { useEffect,useState } from 'react';
+import { Check, Eye, EyeOff, Plus, Settings, Trash } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +29,7 @@ import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/db';
 import { getClientOptions, liferayClient } from '@/lib/headless-client';
 import { tauriFetch } from '@/lib/tauri-client';
+import { toast } from '@/hooks/use-toast';
 
 interface Environment {
     id: string;
@@ -114,30 +124,40 @@ export function EnvironmentSetup() {
     }, [formData.host, formData.port, formData.protocol]);
 
     const handleSave = async () => {
-        const newEnv = {
-            ...formData,
-            id: editingId || crypto.randomUUID(),
-            lastUsed: new Date(),
-        };
-
         try {
             if (editingId) {
+                const res = await tauriFetch(`/applications/${editingId}`);
+                const current = await res.json();
+                const updatedEnv = {
+                    ...current,
+                    ...formData,
+                    clientId: formData.clientId || current.clientId,
+                    clientSecret: formData.clientSecret || current.clientSecret,
+                    id: editingId,
+                    lastUsed: new Date(),
+                    password: formData.password || current.password,
+                    token: formData.token || current.token,
+                    username: formData.username || current.username,
+                };
                 await tauriFetch(`/applications`, {
-                    body: JSON.stringify(newEnv),
+                    body: JSON.stringify(updatedEnv),
                     headers: { 'Content-Type': 'application/json' },
                     method: 'PUT',
                 });
-
                 setSavedEnvironments((prev) =>
-                    prev.map((env) => (env.id === editingId ? newEnv : env)),
+                    prev.map((env) => (env.id === editingId ? updatedEnv : env)),
                 );
             } else {
+                const newEnv = {
+                    ...formData,
+                    id: editingId || crypto.randomUUID(),
+                    lastUsed: new Date(),
+                };
                 await tauriFetch('/applications', {
                     body: JSON.stringify(newEnv),
                     headers: { 'Content-Type': 'application/json' },
                     method: 'POST',
                 });
-
                 setSavedEnvironments((prev) => [...prev, newEnv]);
             }
 
@@ -186,9 +206,8 @@ export function EnvironmentSetup() {
         try {
             const env = savedEnvironments.find((e) => e.id === environmentId);
             if (env) {
-                const baseUrl = `${env.protocol || 'http'}://${env.host}${
-                    env.port ? `:${env.port}` : ''
-                }`;
+                const baseUrl = `${env.protocol || 'http'}://${env.host}${env.port ? `:${env.port}` : ''
+                    }`;
 
                 const sanitized = {
                     baseUrl,
@@ -216,24 +235,30 @@ export function EnvironmentSetup() {
         navigate({ to: '/p' });
     };
 
-    const handleEdit = (env: Environment) => {
-        setFormData({
-            authType: env.authType,
-            clientId: env.clientId || '',
-            clientSecret: env.clientSecret || '',
-            color: env.color,
-            host: env.host,
-            name: env.name,
-            password: env.password || '',
-            port: env.port,
-            protocol: env.protocol,
-            token: env.token || '',
-            tokenUrl: env.tokenUrl || '',
-            type: env.type,
-            username: env.username || '',
-        });
-        setEditingId(env.id);
-        setShowNewConnection(true);
+    const handleEdit = async (env: Environment) => {
+        try {
+            const res = await tauriFetch(`/applications/${env.id}`);
+            const fullEnv = await res.json();
+            setFormData({
+                authType: fullEnv.authType,
+                clientId: fullEnv.clientId,
+                clientSecret: '',
+                color: fullEnv.color,
+                host: fullEnv.host,
+                name: fullEnv.name,
+                password: '',
+                port: fullEnv.port,
+                protocol: fullEnv.protocol,
+                token: '',
+                tokenUrl: fullEnv.tokenUrl || '',
+                type: fullEnv.type,
+                username: fullEnv.username,
+            });
+            setEditingId(env.id);
+            setShowNewConnection(true);
+        } catch (error) {
+            console.error('Failed to fetch environment for editing:', error);
+        }
     };
 
     return (
@@ -324,6 +349,7 @@ export function EnvironmentSetup() {
                                             >
                                                 {env.type}
                                             </Badge>
+
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
@@ -353,6 +379,54 @@ export function EnvironmentSetup() {
                                     ? 'Edit Environment'
                                     : 'New Environment'}
                             </h1>
+
+                            {editingId && <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                    >
+                                        <Trash className="h-4 w-4 text-text-secondary" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Environment</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Are you sure you want to delete the environment "{formData.name} ({formData.host})"? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                            Cancel
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={async () => {
+                                                try {
+                                                    await tauriFetch(`/applications/${editingId}`, { method: 'DELETE' });
+                                                    const res = await tauriFetch('/applications');
+                                                    const data = await res.json();
+                                                    const mapped = data.map((d: any) => ({
+                                                        ...d,
+                                                        lastUsed: d.lastUsed ? new Date(d.lastUsed) : undefined,
+                                                    }));
+
+                                                    setSavedEnvironments(mapped);
+                                                } catch (error) {
+                                                    console.error('Failed to delete environment:', error);
+                                                } finally {
+                                                    toast({ description: "Environment deleted" })
+                                                    setEditingId(null)
+                                                    setShowNewConnection(false)
+                                                }
+                                            }}
+                                            className="bg-destructive text-destructive-foreground text-white hover:bg-destructive/90"
+                                        >
+                                            Delete
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>}
                         </div>
 
                         <Card>
@@ -660,11 +734,10 @@ export function EnvironmentSetup() {
                                             {colorOptions.map((color) => (
                                                 <button
                                                     key={color}
-                                                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                                                        formData.color === color
-                                                            ? 'border-text-primary'
-                                                            : 'border-border'
-                                                    }`}
+                                                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${formData.color === color
+                                                        ? 'border-text-primary'
+                                                        : 'border-border'
+                                                        }`}
                                                     style={{
                                                         backgroundColor: color,
                                                     }}
@@ -677,8 +750,8 @@ export function EnvironmentSetup() {
                                                 >
                                                     {formData.color ===
                                                         color && (
-                                                        <Check className="w-4 h-4 text-white drop-shadow-md" />
-                                                    )}
+                                                            <Check className="w-4 h-4 text-white drop-shadow-md" />
+                                                        )}
                                                 </button>
                                             ))}
                                         </div>
