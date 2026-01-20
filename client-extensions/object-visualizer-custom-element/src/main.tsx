@@ -5,6 +5,7 @@ import tailwindStyleSheet from './core/tailwind-ui.ts';
 import { router } from './core/tanstack-router.tsx';
 import { db } from './lib/db';
 import { getClientOptions, liferayClient } from './lib/headless-client';
+import './styles/window.css';
 
 class ShadcnCustomElement extends HTMLElement {
     private root: Root | undefined;
