@@ -3,7 +3,7 @@ use axum::{
     extract::{OriginalUri, Path, State},
     http::{HeaderMap, Method, StatusCode},
     response::{IntoResponse, Response},
-    routing::{delete, get, patch, post},
+    routing::{delete, get, post},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -52,7 +52,7 @@ pub struct AppState {
 }
 
 #[derive(Clone)]
-struct OAuthToken {
+pub struct OAuthToken {
     authorization: String,
     expires_at: Instant,
 }
