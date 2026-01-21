@@ -112,7 +112,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: liferay-data-studio-${{ matrix.build_name }}
+          name: liferay-playground-${{ matrix.build_name }}
           path: |
             client-extensions/object-visualizer-custom-element/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*
             client-extensions/object-visualizer-custom-element/src-tauri/target/${{ matrix.target }}/release/bundle/deb/*

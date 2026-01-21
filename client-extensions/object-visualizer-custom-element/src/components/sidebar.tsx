@@ -121,7 +121,7 @@ export function Sidebar({
             )}
         >
             {/* Header */}
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between shrink-0">
+            <div className="p-4 pt-5 border-b border-gray-200 flex items-center justify-between shrink-0">
                 {!collapsed && (
                     <div
                         className="flex items-center gap-2 flex-1 min-w-0"
@@ -130,7 +130,7 @@ export function Sidebar({
                     >
                         <Database className="h-6 w-6 text-blue-600 shrink-0" />
                         <h1 className="font-montserrat font-bold text-lg text-gray-900 truncate">
-                            Liferay Data Studio
+                            Liferay Playground
                         </h1>
                     </div>
                 )}
@@ -233,8 +233,8 @@ export function Sidebar({
                                                                     className={cn(
                                                                         'w-full justify-start p-1.5 h-auto text-left hover:bg-gray-100 text-sm pl-4',
                                                                         externalReferenceCode ===
-                                                                            def.externalReferenceCode &&
-                                                                            'bg-blue-50 text-blue-900 font-medium',
+                                                                        def.externalReferenceCode &&
+                                                                        'bg-blue-50 text-blue-900 font-medium',
                                                                     )}
                                                                 >
                                                                     <span className="truncate">
@@ -262,7 +262,7 @@ export function Sidebar({
                             className={cn(
                                 'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
                                 isActive('/pick-lists') &&
-                                    'bg-blue-50 text-blue-900',
+                                'bg-blue-50 text-blue-900',
                             )}
                         >
                             <div className="flex items-center gap-2 w-full min-w-0">
@@ -294,7 +294,7 @@ export function Sidebar({
                             className={cn(
                                 'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
                                 isActive('/mailing/notification-templates') &&
-                                    'bg-blue-50 text-blue-900',
+                                'bg-blue-50 text-blue-900',
                             )}
                         >
                             <div className="flex items-center gap-2 w-full min-w-0">
@@ -317,7 +317,7 @@ export function Sidebar({
                             className={cn(
                                 'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
                                 isActive('/mailing/notification-queue') &&
-                                    'bg-blue-50 text-blue-900',
+                                'bg-blue-50 text-blue-900',
                             )}
                         >
                             <div className="flex items-center gap-2 w-full min-w-0">
@@ -347,7 +347,7 @@ export function Sidebar({
                             className={cn(
                                 'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
                                 isActive('/virtual-instances') &&
-                                    'bg-blue-50 text-blue-900',
+                                'bg-blue-50 text-blue-900',
                             )}
                         >
                             <div className="flex items-center gap-2 w-full min-w-0">
@@ -375,7 +375,7 @@ export function Sidebar({
                             className={cn(
                                 'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
                                 isActive('/query/graphql') &&
-                                    'bg-blue-50 text-blue-900',
+                                'bg-blue-50 text-blue-900',
                             )}
                         >
                             <div className="flex items-center gap-2 w-full min-w-0">
@@ -394,7 +394,7 @@ export function Sidebar({
                             className={cn(
                                 'w-full justify-start p-2 h-auto text-left hover:bg-gray-100',
                                 isActive('/query/rest') &&
-                                    'bg-blue-50 text-blue-900',
+                                'bg-blue-50 text-blue-900',
                             )}
                         >
                             <div className="flex items-center gap-2 w-full min-w-0">

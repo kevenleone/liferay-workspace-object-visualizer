@@ -1,8 +1,8 @@
 {
     "$schema": "https://schema.tauri.app/config/2",
-    "productName": "Liferay Data Studio",
+    "productName": "Liferay Playground",
     "version": "0.1.0",
-    "identifier": "com.liferay.data.studio",
+    "identifier": "com.liferay.playground",
     "build": {
         "beforeDevCommand": "TAURI_ENV_PROXY_BASE_URL=http://localhost:2027 bun run dev",
         "beforeBuildCommand": "TAURI_ENV_PROXY_BASE_URL=http://localhost:2027 bun run build",
@@ -12,7 +12,7 @@
     "app": {
         "windows": [
             {
-                "title": "Liferay Data Studio",
+                "title": "Liferay Playground",
                 "width": 800,
                 "height": 600,
                 "resizable": true,

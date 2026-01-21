@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "LiferayStudio"
+name = "LiferayPlayground"
 version = "0.1.0"
 dependencies = [
  "axum",

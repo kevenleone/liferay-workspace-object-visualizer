@@ -1,5 +1,5 @@
 [package]
-name = "LiferayStudio"
+name = "LiferayPlayground"
 version = "0.1.0"
 description = "A Liferay Application wrapper for your remote instances"
 authors = ["Keven Leone <keven.santos.sz@gmail.com>"]
