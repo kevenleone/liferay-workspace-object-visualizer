@@ -123,7 +123,7 @@ export interface FileRoutesByFullPath {
   '/p/query/rest': typeof PQueryRestRoute
   '/p/$externalReferenceCode/': typeof PExternalReferenceCodeIndexRoute
   '/p/mailing/notification-templates/$externalReferenceCode': typeof PMailingNotificationTemplatesExternalReferenceCodeRoute
-  '/p/mailing/notification-templates': typeof PMailingNotificationTemplatesIndexRoute
+  '/p/mailing/notification-templates/': typeof PMailingNotificationTemplatesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -175,7 +175,7 @@ export interface FileRouteTypes {
     | '/p/query/rest'
     | '/p/$externalReferenceCode/'
     | '/p/mailing/notification-templates/$externalReferenceCode'
-    | '/p/mailing/notification-templates'
+    | '/p/mailing/notification-templates/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -312,7 +312,7 @@ declare module '@tanstack/react-router' {
     '/p/mailing/notification-templates/': {
       id: '/p/mailing/notification-templates/'
       path: '/mailing/notification-templates'
-      fullPath: '/p/mailing/notification-templates'
+      fullPath: '/p/mailing/notification-templates/'
       preLoaderRoute: typeof PMailingNotificationTemplatesIndexRouteImport
       parentRoute: typeof PRouteRoute
     }

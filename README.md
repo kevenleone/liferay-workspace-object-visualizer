@@ -1,76 +1,112 @@
-# Liferay Workspace: Object Visualizer
+# Object Visualizer Custom Element
 
-A workspace hosting the Object Visualizer custom element and its Tauri proxy. The custom element provides a UI for browsing and querying Liferay Objects. The Tauri backend proxies requests and persists environment configurations globally on the machine.
+A React + TypeScript custom element for browsing and querying Liferay Objects. It runs in the browser, renders inside a Shadow DOM, and interoperates with a local Tauri server that proxies requests to Liferay with support for Basic, Bearer, and OAuth2 client-credentials.
 
-## Structure
+## Overview
 
-- Root workspace: npm workspaces and Gradle/Liferay Workspace structure
-- App code:
-    - client-extensions/object-visualizer-custom-element
-        - React + TanStack Router + Tailwind
-        - Tauri backend server (Rust) for proxy and persistence
+- Custom element: `object-visualizer-custom-element`, defined in `src/main.tsx`
+- UI/Router: React with TanStack Router (hash history)
+- Styling: Tailwind CSS (adopted stylesheet into Shadow DOM)
+- Icons/Components: lucide-react, shadcn-inspired UI
+- Data: liferay-headless-rest-client configured to use either Liferay’s own fetch or the local Tauri proxy
+- Proxy: local Tauri server at `127.0.0.1:3001` with global environment persistence
 
-## Key Components
+## Architecture
 
-- Custom element: renders inside a Shadow DOM, defined in `client-extensions/object-visualizer-custom-element/src/main.tsx`
-- Router: `@tanstack/react-router` with generated `routeTree.gen.ts`
-- UI: shadcn-inspired components, lucide-react icons, Tailwind CSS
-- Data client: `liferay-headless-rest-client` driven via `src/lib/headless-client.ts`
-- Proxy server: `src-tauri/src/server.rs`, listens on `127.0.0.1:2027`
-
-## Tauri Proxy Features
-
-- Global environment persistence at `~/.object-visualizer/applications.json`
-- Endpoints:
-    - `GET /applications`: list environments
-    - `POST /applications`: add environment
-    - `PUT /applications`: update environment
-    - `GET|POST /proxy/*`: forward requests to the selected environment, preserving query params
-- Authentication:
-    - Basic: encodes `username:password`
-    - Bearer: uses a static token
-    - OAuth2: client credentials flow using `tokenUrl`, caches token until expiry
-
-## Environment Selection Flow
-
-- Managed by `EnvironmentSetup` in the custom element
-- Writes the selected environment to localStorage
-- Updates `liferayClient` config and invalidates the router to refetch data immediately
+- Shadow DOM app bootstrapped in `src/main.tsx`
+- Router config in `src/core/tanstack-router.tsx`
+    - Default pending overlay (`defaultPendingComponent`) for route transitions
+- Feature routes under `src/routes`
+    - `/environments`: setup and selection of remote targets
+    - `/p`: object browsing, schema, and query
+    - Nested routes load data via TanStack Router loaders
+- Tauri backend (`src-tauri/src/server.rs`)
+    - Stores environments in `~/.object-visualizer/applications.json`
+    - Proxies requests under `/proxy/*` and forwards query params
+    - Authorization: Basic, Bearer, OAuth2 (client credentials with token caching)
 
 ## Tooling
 
-- Frontend: Vite + React SWC
-- Router plugin: `@tanstack/router-plugin/vite` (file-based routes)
+- Build/dev: Vite with React SWC
+- Router plugin: `@tanstack/router-plugin/vite` for file-based routes
 - Lint: ESLint
-- Desktop: Tauri CLI
+- Desktop packaging: Tauri CLI and config in `src-tauri/tauri.conf.json`
 
 ## Commands
 
-- Frontend (from `client-extensions/object-visualizer-custom-element`):
-    - `npm run dev`: web dev server
-    - `npm run build`: web build
-    - `npm run lint`: lint
-    - `npm run preview`: preview build
-    - `npm run tauri`: Tauri CLI
-    - `npm run tauri:build`: desktop build
+From this directory:
+
+- `npm run dev`: start the Vite dev server (web)
+- `npm run build`: build the web bundle
+- `npm run preview`: preview the built bundle
+- `npm run lint`: run ESLint
+- `npm run tauri`: run Tauri CLI (dev/build flows controlled by `tauri.conf.json`)
+- `npm run tauri:build`: build desktop app (invokes Vite build via Tauri hooks)
 
 ## Configuration
 
-- Client-side env prefixes: `VITE_` and `TAURI_ENV_*`
-- Proxy base URL: `TAURI_ENV_PROXY_BASE_URL`
-    - Default: `http://localhost:2027`
+- Env prefix: `VITE_` and `TAURI_ENV_*` are exposed to the client via Vite
+- Proxy base URL:
+    - `TAURI_ENV_PROXY_BASE_URL` controls the base URL used by our Tauri client helpers
+    - Defaults to `http://localhost:3001` if unset
     - Example:
-        - macOS/zsh: `TAURI_ENV_PROXY_BASE_URL=http://localhost:2027 npm run dev`
-        - Windows PowerShell: `$env:TAURI_ENV_PROXY_BASE_URL='http://localhost:2027'; npm run dev`
+        - macOS/zsh: `TAURI_ENV_PROXY_BASE_URL=http://localhost:3001 npm run dev`
+        - Windows PowerShell: `$env:TAURI_ENV_PROXY_BASE_URL='http://localhost:3001'; npm run dev`
 
-## Development Notes
+## Environment Handling
 
-- Ensure the Tauri server is running or reachable on `127.0.0.1:2027`
-- Select an environment before navigating the object pages
-- Router pending overlay shows a loading state during route transitions
+- Saved environments live in `~/.object-visualizer/applications.json` (created automatically)
+- UI for add/edit/select in `src/components/environment-setup.tsx`
+- On selection:
+    - Environment info written to localStorage under `StorageKeys.SELECTED_ENVIRONMENT_INFO`
+    - `liferayClient.setConfig(getClientOptions())` updates headers (including `x-target-id`)
+    - `router.invalidate()` forces route loaders to re-run immediately with the updated configuration
+
+## Data Client
+
+- `src/lib/headless-client.ts`
+    - If inside Liferay: uses `Liferay.Util.fetch` with baseUrl `/`
+    - If external: uses proxy base URL `${TAURI_ENV_PROXY_BASE_URL}/proxy` and sets `x-target-id`
+- `src/lib/tauri-client.ts`
+    - Helpers: `tauriUrl`, `tauriFetch`, `tauriJson`
+    - Centralizes usage of `TAURI_ENV_PROXY_BASE_URL`
+
+## Proxy Server (Tauri)
+
+- Listens on `127.0.0.1:3001`
+- Routes:
+    - `POST /applications` to add environment
+    - `PUT /applications` to update environment
+    - `GET /applications` to list environments
+    - `GET|POST /proxy/*path` forwards to target host, preserves query string
+- Auth:
+    - `basic`: encodes `username:password`
+    - `bearer`: uses provided token
+    - `oauth`/`oauth2`: exchanges client credentials at `tokenUrl`, caches token until expiry
+
+## Routing UX
+
+- Pending overlay for any route loader activity via TanStack Router’s `defaultPendingComponent`
+- Keep the UI responsive during data fetching and transitions
+
+## Development Tips
+
+- Ensure `TAURI_ENV_PROXY_BASE_URL` matches where the Tauri server runs
+- Select an environment in `/environments` before browsing objects
+- If loaders appear stale, `router.invalidate()` is already wired to run on environment selection
+
+## Linting
+
+- `npm run lint`
+- Some warnings about “only-export-components” are informational and do not block dev
+
+## Packaging
+
+- Desktop builds via `npm run tauri:build`
+- Vite outputs are configured for Tauri in `vite.config.ts` (build paths, assets)
 
 ## Troubleshooting
 
-- No environments: create one in `/environments`
-- OAuth2 errors: verify `clientId`, `clientSecret`, `tokenUrl`
-- Stale data: environment selection triggers router invalidation; confirm it executed
+- Proxy not reachable: confirm server logs show “Server listening on 127.0.0.1:3001”
+- OAuth2 failures: verify `clientId`, `clientSecret`, and `tokenUrl` in the environment config
+- Missing data: reselect environment or check that `x-target-id` is set in client config

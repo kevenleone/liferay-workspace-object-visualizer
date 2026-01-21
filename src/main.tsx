@@ -3,8 +3,8 @@ import { createRoot, Root } from 'react-dom/client';
 
 import tailwindStyleSheet from './core/tailwind-ui.ts';
 import { router } from './core/tanstack-router.tsx';
-import { db } from './lib/db';
-import { getClientOptions, liferayClient } from './lib/headless-client';
+import { db } from './lib/db.ts';
+import { getClientOptions, liferayClient } from './lib/headless-client.ts';
 import './styles/window.css';
 
 class ShadcnCustomElement extends HTMLElement {
