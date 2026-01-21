@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "liferay-playgruond-custom-element",
+      "name": "liferay-playground",
       "dependencies": {
         "@faker-js/faker": "^10.2.0",
         "@radix-ui/react-alert-dialog": "^1.1.10",

@@ -8,8 +8,8 @@ A React + TypeScript custom element for browsing and querying Liferay Objects. I
 - UI/Router: React with TanStack Router (hash history)
 - Styling: Tailwind CSS (adopted stylesheet into Shadow DOM)
 - Icons/Components: lucide-react, shadcn-inspired UI
-- Data: liferay-headless-rest-client configured to use either Liferay’s own fetch or the local Tauri proxy
-- Proxy: local Tauri server at `127.0.0.1:3001` with global environment persistence
+- Data: liferay-headless-rest-client configured to use either Liferay's own fetch or the local Tauri proxy
+- Proxy: local Tauri server at `127.0.0.1:2027` with global environment persistence
 
 ## Architecture
 
@@ -30,6 +30,7 @@ A React + TypeScript custom element for browsing and querying Liferay Objects. I
 - Build/dev: Vite with React SWC
 - Router plugin: `@tanstack/router-plugin/vite` for file-based routes
 - Lint: ESLint
+- Test: Vitest with jsdom environment
 - Desktop packaging: Tauri CLI and config in `src-tauri/tauri.conf.json`
 
 ## Commands
@@ -40,7 +41,9 @@ From this directory:
 - `npm run build`: build the web bundle
 - `npm run preview`: preview the built bundle
 - `npm run lint`: run ESLint
-- `npm run tauri`: run Tauri CLI (dev/build flows controlled by `tauri.conf.json`)
+- `npm run test`: run Vitest
+- `npm run test:coverage`: run Vitest with coverage
+- `npm run tauri:dev`: run Tauri dev flow
 - `npm run tauri:build`: build desktop app (invokes Vite build via Tauri hooks)
 
 ## Configuration
@@ -48,10 +51,10 @@ From this directory:
 - Env prefix: `VITE_` and `TAURI_ENV_*` are exposed to the client via Vite
 - Proxy base URL:
     - `TAURI_ENV_PROXY_BASE_URL` controls the base URL used by our Tauri client helpers
-    - Defaults to `http://localhost:3001` if unset
+    - Defaults to `http://localhost:2027` if unset
     - Example:
-        - macOS/zsh: `TAURI_ENV_PROXY_BASE_URL=http://localhost:3001 npm run dev`
-        - Windows PowerShell: `$env:TAURI_ENV_PROXY_BASE_URL='http://localhost:3001'; npm run dev`
+        - macOS/zsh: `TAURI_ENV_PROXY_BASE_URL=http://localhost:2027 npm run dev`
+        - Windows PowerShell: `$env:TAURI_ENV_PROXY_BASE_URL='http://localhost:2027'; npm run dev`
 
 ## Environment Handling
 
@@ -73,7 +76,7 @@ From this directory:
 
 ## Proxy Server (Tauri)
 
-- Listens on `127.0.0.1:3001`
+- Listens on `127.0.0.1:2027`
 - Routes:
     - `POST /applications` to add environment
     - `PUT /applications` to update environment
@@ -86,7 +89,7 @@ From this directory:
 
 ## Routing UX
 
-- Pending overlay for any route loader activity via TanStack Router’s `defaultPendingComponent`
+- Pending overlay for any route loader activity via TanStack Router's `defaultPendingComponent`
 - Keep the UI responsive during data fetching and transitions
 
 ## Development Tips
@@ -95,18 +98,24 @@ From this directory:
 - Select an environment in `/environments` before browsing objects
 - If loaders appear stale, `router.invalidate()` is already wired to run on environment selection
 
+## Testing
+
+- Tests located in `src/**/__tests__/` directories
+- Run `npm run test` to execute Vitest
+- Run `npm run test:coverage` for coverage reports
+
 ## Linting
 
 - `npm run lint`
-- Some warnings about “only-export-components” are informational and do not block dev
 
 ## Packaging
 
 - Desktop builds via `npm run tauri:build`
+- Liferay client extension builds via `npm run build` (configured in `client-extension.yaml`)
 - Vite outputs are configured for Tauri in `vite.config.ts` (build paths, assets)
 
 ## Troubleshooting
 
-- Proxy not reachable: confirm server logs show “Server listening on 127.0.0.1:3001”
+- Proxy not reachable: confirm server logs show "Server listening on 127.0.0.1:2027"
 - OAuth2 failures: verify `clientId`, `clientSecret`, and `tokenUrl` in the environment config
 - Missing data: reselect environment or check that `x-target-id` is set in client config
