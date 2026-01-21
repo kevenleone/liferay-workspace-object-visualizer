@@ -91,14 +91,14 @@ export const Route = createFileRoute('/p/$externalReferenceCode/')({
                 typeof search.page === 'string'
                     ? parseInt(search.page, 10)
                     : typeof search.page === 'number'
-                      ? search.page
-                      : 1,
+                        ? search.page
+                        : 1,
             pageSize:
                 typeof search.pageSize === 'string'
                     ? parseInt(search.pageSize, 10)
                     : typeof search.pageSize === 'number'
-                      ? search.pageSize
-                      : 10,
+                        ? search.pageSize
+                        : 10,
         };
     },
 });
@@ -203,14 +203,10 @@ function RouteComponent() {
     }, [loaderData, objectDefinition]);
 
     return (
-        <div>
-            <JsonToCsvConverter
-                entriesPage={loaderData}
-                objectDefinition={objectDefinition}
-                data={rows}
-            />
-
-            {/* <DataTableBrowser objectName="User"></DataTableBrowser> */}
-        </div>
+        <JsonToCsvConverter
+            entriesPage={loaderData}
+            objectDefinition={objectDefinition}
+            data={rows}
+        />
     );
 }

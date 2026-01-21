@@ -46,7 +46,7 @@ function RouteComponent() {
     console.log(myUserAccount);
 
     return (
-        <div className="flex h-screen w-full overflow-hidden bg-background">
+        <div className="flex h-screen w-screen overflow-hidden bg-background">
             <Sidebar
                 myUserAccount={myUserAccount}
                 objectDefinitions={objectDefinitions}

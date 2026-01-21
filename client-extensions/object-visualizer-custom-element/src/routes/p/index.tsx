@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { Activity, Database, FileText, Globe } from 'lucide-react';
 
 import {
@@ -70,17 +70,21 @@ const capabilities = [
 
 function RouteComponent() {
     const navigate = useNavigate();
+    const { myUserAccount } = useLoaderData({ from: "/p" })
+
 
     return (
         <div className="p-8 h-full overflow-auto bg-gray-50/30">
             <div className="mb-8">
-                <h1 className="text-3xl font-montserrat font-bold text-gray-900 mb-2">
-                    Liferay Data Studio
+                <h1 className="text-3xl font-montserrat font-bold text-indigo-700 mb-2">
+                    Hello{myUserAccount && `, ${myUserAccount?.name?.split(" ")?.at(0)}`} 👋🏻
                 </h1>
 
                 <p className="text-lg text-muted-foreground">
-                    Welcome to your central hub for data management and
+                    Welcome to Liferay Playground. Your central hub for data management and
                     exploration.
+
+                    <p className='text-2xl mt-4'>Capabalities</p>
                 </p>
             </div>
 

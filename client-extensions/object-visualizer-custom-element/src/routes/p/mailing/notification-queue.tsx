@@ -75,7 +75,7 @@ function EmailPreviewContent({
                                                 notificationQueue.recipients.filter(
                                                     (r: any) => r.cc,
                                                 ).length -
-                                                    1 && ', '}
+                                                1 && ', '}
                                         </span>
                                     ))}
                             </div>
@@ -99,7 +99,7 @@ function EmailPreviewContent({
                                                 notificationQueue.recipients.filter(
                                                     (r: any) => r.bcc,
                                                 ).length -
-                                                    1 && ', '}
+                                                1 && ', '}
                                         </span>
                                     ))}
                             </div>
@@ -115,6 +115,7 @@ function EmailPreviewContent({
                     </div>
                 </div>
             </div>
+
             <div className="bg-card border rounded-lg">
                 <div className="p-6">
                     <EmailRender>{notificationQueue.body}</EmailRender>
@@ -186,7 +187,7 @@ function NotificationQueuePage() {
     ];
 
     return (
-        <div className="p-6 overflow-auto bg-gray-50/50">
+        <div className="p-6 overflow-auto h-screen bg-gray-50/50">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold font-montserrat text-gray-900">
                     Notification Queue

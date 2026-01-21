@@ -5,7 +5,7 @@ import {
     useNavigate,
 } from '@tanstack/react-router';
 import { getObjectDefinitionByExternalReferenceCode } from 'liferay-headless-rest-client/object-admin-v1.0';
-import { Code, Eye, Play,Table } from 'lucide-react';
+import { Code, Eye, Play, Table } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,7 @@ function RouteComponent() {
     const activeRoute = navItems.some(({ path }) => pathname.endsWith(path));
 
     return (
-        <div className="flex-1 flex flex-col bg-background min-h-0">
+        <div className="flex-1 flex overflow-auto h-screen flex-col bg-background min-h-0">
             <div className="border-b border-border p-6">
                 <div className="flex items-center gap-3 mb-4">
                     <Table className="h-6 w-6 text-primary" />
@@ -63,7 +63,7 @@ function RouteComponent() {
                             key={path}
                             variant={
                                 (index === 0 && !activeRoute) ||
-                                pathname.endsWith(path)
+                                    pathname.endsWith(path)
                                     ? 'default'
                                     : 'ghost'
                             }
@@ -81,8 +81,8 @@ function RouteComponent() {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-hidden min-h-0">
-                <div className="h-full p-6 overflow-auto">
+            <div className="flex-1  min-h-0">
+                <div className="h-screen p-6 overflow-auto">
                     <Outlet />
                 </div>
             </div>
